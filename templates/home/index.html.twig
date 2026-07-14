@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-900 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KITUNGA NA BISO - Commande & Parrainage</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f2f8f3',
+                            100: '#e1efe4',
+                            200: '#c5dfcd',
+                            300: '#9bc6aa',
+                            400: '#6ca881',
+                            500: '#488b60',
+                            600: '#35714a',
+                            700: '#2c5b3d',
+                            800: '#254932',
+                            900: '#203d2b',
+                            950: '#112217',
+                        },
+                        accent: {
+                            gold: '#d4af37',
+                            amber: '#f59e0b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(72, 139, 96, 0.4);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(72, 139, 96, 0.6);
+        }
+    </style>
+</head>
+<body class="h-full font-sans flex flex-col custom-scrollbar overflow-y-auto">
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 right-5 z-50 transform translate-x-80 transition-transform duration-300 ease-in-out glass rounded-xl p-4 flex items-center space-x-3 max-w-sm hidden shadow-2xl">
+        <div id="toast-icon" class="p-2 rounded-lg bg-primary-500 text-white">
+            <i data-lucide="check" class="w-5 h-5"></i>
+        </div>
+        <div>
+            <h4 id="toast-title" class="font-semibold text-slate-100 text-sm">Notification</h4>
+            <p id="toast-message" class="text-xs text-slate-400 mt-0.5">Message text.</p>
+        </div>
+    </div>
+
+    <!-- Navigation Header -->
+    <header class="glass sticky top-0 z-40 w-full shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-primary-600 to-accent-amber p-2.5 rounded-2xl shadow-lg shadow-primary-950/50">
+                    <i data-lucide="cooking-pot" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-emerald-400 via-primary-400 to-accent-amber bg-clip-text text-transparent">KITUNGA NA BISO</h1>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">Alimentation & Parrainage</p>
+                </div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center space-x-4">
+                <!-- Cart Button -->
+                <button onclick="toggleCartDrawer()" class="relative p-2.5 rounded-xl hover:bg-slate-800 border border-slate-700/50 text-slate-300 hover:text-white transition">
+                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                    <span id="cart-badge" class="absolute -top-1.5 -right-1.5 bg-accent-amber text-slate-950 font-bold text-[10px] w-5 h-5 flex items-center justify-center rounded-full hidden">0</span>
+                </button>
+
+                <!-- Auth State Wrapper -->
+                <div id="header-auth-section" class="flex items-center space-x-3">
+                    <button onclick="openAuthModal()" class="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-semibold rounded-xl transition shadow-md shadow-primary-950/30">
+                        Connexion / Inscription
+                    </button>
+                </div>
+
+                <!-- Admin Toggle Button -->
+                <div id="header-admin-toggle-wrapper" class="hidden border-l border-slate-800 pl-4">
+                    <button onclick="toggleAdminPortal()" id="admin-portal-btn" class="px-4 py-2 border border-accent-amber/50 hover:bg-accent-amber/10 text-accent-amber text-sm font-semibold rounded-xl transition flex items-center space-x-2">
+                        <i data-lucide="shield" class="w-4 h-4"></i>
+                        <span>Espace Admin</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col space-y-8">
+        
+        <!-- Workflow Simulator Stepper -->
+        <section class="glass rounded-3xl p-6 shadow-xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute bottom-0 left-0 w-64 h-64 bg-accent-amber/5 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-850 pb-4 mb-6">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-100 flex items-center space-x-2">
+                        <i data-lucide="play" class="w-5 h-5 text-accent-amber"></i>
+                        <span>Simulateur Interactif de Parrainage & Commissions</span>
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Exécutez et observez en direct le calcul multiniveau des commissions (5% Niveau 1, 2% Niveau 2).</p>
+                </div>
+                <div class="mt-3 md:mt-0 flex space-x-2">
+                    <button onclick="resetSimulator()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-semibold rounded-lg transition border border-slate-700/60">
+                        Réinitialiser le Simulateur
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stepper Steps Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- Step 1: Create Network -->
+                <div id="sim-step-1" class="border border-slate-800 bg-slate-900/50 rounded-2xl p-4 flex flex-col justify-between hover:border-primary-500/40 transition">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-primary-400">Étape 1</span>
+                            <span class="text-xs font-semibold text-slate-500">Arborescence</span>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-200 mt-2">Créer le Réseau</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Création de A, puis B (parrainé par A), et C (parrainé par B).</p>
+                    </div>
+                    <button onclick="runStep1()" class="mt-4 w-full py-2 bg-primary-600/20 hover:bg-primary-600/35 text-primary-300 border border-primary-500/30 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5">
+                        <span>Créer A, B et C</span>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <!-- Step 2: C Orders -->
+                <div id="sim-step-2" class="border border-slate-800 bg-slate-900/50 rounded-2xl p-4 flex flex-col justify-between opacity-50 transition">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Étape 2</span>
+                            <span class="text-xs font-semibold text-slate-500">Achat</span>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-200 mt-2">Commande de C</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Le client C effectue un achat de 4 sacs de Riz de Bumba (100 000 FC).</p>
+                    </div>
+                    <button id="btn-step-2" disabled onclick="runStep2()" class="mt-4 w-full py-2 bg-slate-800 text-slate-500 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5">
+                        <span>Commander 100k FC</span>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <!-- Step 3: Admin Delivers -->
+                <div id="sim-step-3" class="border border-slate-800 bg-slate-900/50 rounded-2xl p-4 flex flex-col justify-between opacity-50 transition">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Étape 3</span>
+                            <span class="text-xs font-semibold text-slate-500">Logistique</span>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-200 mt-2">Marquer Livré</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">L'administrateur passe la commande de C en statut "Livré".</p>
+                    </div>
+                    <button id="btn-step-3" disabled onclick="runStep3()" class="mt-4 w-full py-2 bg-slate-800 text-slate-500 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5">
+                        <span>Livrer la commande</span>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <!-- Step 4: C Confirms -->
+                <div id="sim-step-4" class="border border-slate-800 bg-slate-900/50 rounded-2xl p-4 flex flex-col justify-between opacity-50 transition">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Étape 4</span>
+                            <span class="text-xs font-semibold text-slate-500">Validation</span>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-200 mt-2">C Confirme</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">C valide la réception, ce qui calcule et génère les commissions.</p>
+                    </div>
+                    <button id="btn-step-4" disabled onclick="runStep4()" class="mt-4 w-full py-2 bg-slate-800 text-slate-500 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5">
+                        <span>Confirmer Réception</span>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <!-- Step 5: Check Balances -->
+                <div id="sim-step-5" class="border border-slate-800 bg-slate-900/50 rounded-2xl p-4 flex flex-col justify-between opacity-50 transition">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Étape 5</span>
+                            <span class="text-xs font-semibold text-slate-500">Commissions</span>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-200 mt-2">Vérifier Portefeuilles</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">A gagne 2 000 FC (2%) et B gagne 5 000 FC (5%). Visualisez les soldes.</p>
+                    </div>
+                    <button id="btn-step-5" disabled onclick="runStep5()" class="mt-4 w-full py-2 bg-slate-800 text-slate-500 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5">
+                        <span>Vérifier les Soldes</span>
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Terminal log wrapper -->
+            <div class="mt-5 border border-slate-800 rounded-2xl bg-slate-950 p-4">
+                <div class="flex items-center justify-between border-b border-slate-900 pb-2 mb-2">
+                    <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Console de sortie API</span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                </div>
+                <div id="simulator-console" class="font-mono text-xs text-slate-300 h-28 overflow-y-auto custom-scrollbar leading-relaxed">
+                    [Info] Le simulateur est prêt. Cliquez sur "Créer A, B et C" pour commencer.
+                </div>
+            </div>
+        </section>
+
+        <!-- Client Portal View -->
+        <div id="client-portal-view" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Catalog Section -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-slate-100 flex items-center space-x-2">
+                            <i data-lucide="store" class="w-5.5 h-5.5 text-primary-400"></i>
+                            <span>Catalogue Produits Alimentaires</span>
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">Sélection de produits alimentaires commercialisés par KITUNGA NA BISO.</p>
+                    </div>
+                    <!-- Categories filters -->
+                    <div class="flex space-x-2 bg-slate-850 p-1 rounded-xl border border-slate-800">
+                        <button onclick="filterCatalog('')" id="cat-all" class="px-3 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg transition">Tous</button>
+                        <button onclick="filterCatalog('Poissons')" id="cat-poissons" class="px-3 py-1.5 text-slate-400 hover:text-white text-xs font-semibold rounded-lg transition">Poissons</button>
+                        <button onclick="filterCatalog('Féculents')" id="cat-feculents" class="px-3 py-1.5 text-slate-400 hover:text-white text-xs font-semibold rounded-lg transition">Féculents</button>
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <!-- Loaded dynamically -->
+                    <div class="col-span-full py-12 flex flex-col items-center justify-center text-slate-500">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+                        <p class="text-xs mt-3">Chargement des produits...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Dashboard / Right Panel -->
+            <div class="space-y-8">
+                <!-- Wallet Card (Auth required) -->
+                <div id="dashboard-wallet-card" class="glass rounded-3xl p-6 shadow-xl relative overflow-hidden hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-primary-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Portefeuille Commissions</span>
+                            <h3 id="wallet-client-name" class="font-bold text-slate-100 text-base mt-0.5">Client</h3>
+                        </div>
+                        <span class="bg-primary-500/15 text-primary-400 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">Solde Actif</span>
+                    </div>
+
+                    <!-- Balance Display -->
+                    <div class="mt-6">
+                        <p class="text-3xl font-extrabold tracking-tight text-white"><span id="wallet-balance">0</span> <span class="text-sm font-semibold text-slate-400">FC</span></p>
+                        <p class="text-[11px] text-slate-400 mt-1">Disponible pour retrait mobile money ou cash.</p>
+                    </div>
+
+                    <!-- Cumulative values -->
+                    <div class="grid grid-cols-2 gap-4 border-t border-slate-800/80 pt-4 mt-6">
+                        <div>
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Total Généré</span>
+                            <p id="wallet-total-generated" class="text-sm font-bold text-slate-200 mt-0.5">0 FC</p>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Total Payé</span>
+                            <p id="wallet-total-paid" class="text-sm font-bold text-slate-200 mt-0.5">0 FC</p>
+                        </div>
+                    </div>
+
+                    <!-- Referral code info -->
+                    <div class="bg-slate-900/60 rounded-2xl p-3.5 border border-slate-800/80 mt-5 flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] text-slate-400 uppercase font-semibold">Votre Code Parrain</span>
+                            <p id="wallet-referral-code" class="text-sm font-extrabold text-accent-gold mt-0.5">---</p>
+                        </div>
+                        <button onclick="copyReferralCode()" class="p-2 bg-slate-800 hover:bg-slate-750 text-slate-400 hover:text-white rounded-lg transition">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- Downline Count Stats -->
+                    <div class="grid grid-cols-2 gap-3 mt-4 text-center">
+                        <div class="bg-slate-900/40 rounded-xl p-2.5 border border-slate-850">
+                            <span id="wallet-direct-count" class="text-lg font-bold text-slate-200 block">0</span>
+                            <span class="text-[9px] text-slate-500 uppercase font-semibold">Filleuls Directs</span>
+                        </div>
+                        <div class="bg-slate-900/40 rounded-xl p-2.5 border border-slate-850">
+                            <span id="wallet-indirect-count" class="text-lg font-bold text-slate-200 block">0</span>
+                            <span class="text-[9px] text-slate-500 uppercase font-semibold">Filleuls Indirects</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Sessions Actions / Orders List -->
+                <div id="dashboard-orders-card" class="glass rounded-3xl p-6 shadow-xl hidden">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2 border-b border-slate-800 pb-3">
+                        <i data-lucide="package" class="w-4.5 h-4.5 text-primary-400"></i>
+                        <span>Mes Commandes Récentes</span>
+                    </h3>
+                    <div id="customer-orders-list" class="mt-4 space-y-3 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+                        <!-- Loaded dynamically -->
+                        <p class="text-xs text-slate-500 text-center py-4">Aucune commande enregistrée.</p>
+                    </div>
+                </div>
+
+                <!-- Notifications Panel -->
+                <div id="dashboard-notifications-card" class="glass rounded-3xl p-6 shadow-xl hidden">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2 border-b border-slate-800 pb-3">
+                        <i data-lucide="bell" class="w-4.5 h-4.5 text-accent-amber"></i>
+                        <span>Notifications</span>
+                    </h3>
+                    <div id="customer-notifications-list" class="mt-4 space-y-3 max-h-56 overflow-y-auto custom-scrollbar pr-1">
+                        <!-- Loaded dynamically -->
+                        <p class="text-xs text-slate-500 text-center py-4">Aucune notification.</p>
+                    </div>
+                </div>
+
+                <!-- Promo parrainage card -->
+                <div class="bg-gradient-to-tr from-primary-950 via-primary-900 to-slate-900 rounded-3xl p-6 shadow-xl border border-primary-500/25 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-accent-gold/10 rounded-full blur-xl pointer-events-none"></div>
+                    <h3 class="text-base font-extrabold text-white flex items-center space-x-2">
+                        <i data-lucide="users" class="w-5 h-5 text-accent-gold"></i>
+                        <span>Parrainage KITUNGA multiniveau</span>
+                    </h3>
+                    <ul class="text-xs text-slate-300 mt-4 space-y-3 leading-relaxed">
+                        <li class="flex items-start space-x-2">
+                            <span class="text-accent-gold font-bold">5%</span>
+                            <span>sur chaque achat de votre filleul direct (Niveau 1).</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-accent-gold font-bold">2%</span>
+                            <span>sur chaque achat du filleul de votre filleul (Niveau 2).</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Administration Portal View -->
+        <div id="admin-portal-view" class="space-y-8 hidden">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-xl font-extrabold text-slate-100 flex items-center space-x-2">
+                        <i data-lucide="shield-check" class="w-6 h-6 text-accent-amber"></i>
+                        <span>Portail d'Administration KITUNGA NA BISO</span>
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Vue consolidée du réseau de vente, gestion des livreurs, décaissements de commissions et catalogue.</p>
+                </div>
+                <button onclick="toggleAdminPortal()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-semibold rounded-lg transition border border-slate-700/60">
+                    Retour Boutique
+                </button>
+            </div>
+
+            <!-- Admin Key Stats Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                <div class="glass rounded-2xl p-5 shadow-lg">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chiffre d'Affaires</span>
+                    <span id="admin-stat-sales" class="text-2xl font-black text-white mt-2 block">0 FC</span>
+                </div>
+                <div class="glass rounded-2xl p-5 shadow-lg">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Commissions Générées</span>
+                    <span id="admin-stat-comm-gen" class="text-2xl font-black text-primary-400 mt-2 block">0 FC</span>
+                </div>
+                <div class="glass rounded-2xl p-5 shadow-lg">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Commissions Payées</span>
+                    <span id="admin-stat-comm-paid" class="text-2xl font-black text-slate-300 mt-2 block">0 FC</span>
+                </div>
+                <div class="glass rounded-2xl p-5 shadow-lg">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Commandes</span>
+                    <span id="admin-stat-orders" class="text-2xl font-black text-accent-amber mt-2 block">0</span>
+                </div>
+                <div class="glass rounded-2xl p-5 shadow-lg">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Clients</span>
+                    <span id="admin-stat-clients" class="text-2xl font-black text-slate-100 mt-2 block">0</span>
+                </div>
+            </div>
+
+            <!-- Orders Management Table & Actions -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Orders -->
+                <div class="lg:col-span-2 glass rounded-3xl p-6 shadow-xl">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2 border-b border-slate-800 pb-3 mb-4">
+                        <i data-lucide="package-open" class="w-4.5 h-4.5 text-accent-amber"></i>
+                        <span>Suivi des Commandes Clients</span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="text-[10px] uppercase font-bold text-slate-500 border-b border-slate-800/80">
+                                    <th class="py-2.5">ID</th>
+                                    <th class="py-2.5">Client</th>
+                                    <th class="py-2.5">Total</th>
+                                    <th class="py-2.5">Méthode</th>
+                                    <th class="py-2.5">Statut</th>
+                                    <th class="py-2.5 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-orders-table" class="divide-y divide-slate-850 text-slate-300">
+                                <!-- Dynamically loaded -->
+                                <tr>
+                                    <td colspan="6" class="py-8 text-center text-slate-500">Aucune commande en cours.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Offline Payments Registration -->
+                <div class="glass rounded-3xl p-6 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2 border-b border-slate-800 pb-3 mb-5">
+                            <i data-lucide="hand-coins" class="w-4.5 h-4.5 text-primary-400"></i>
+                            <span>Enregistrer Paiement Hors-Ligne</span>
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-1 mb-4 leading-relaxed">
+                            Après avoir versé le montant via M-Pesa, Orange, Airtel ou Cash, enregistrez le décaissement ici pour l'inscrire dans le grand livre et mettre à jour le solde du client.
+                        </p>
+                        <!-- Form elements -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1.5">Client bénéficiaire (ID)</label>
+                                <input type="number" id="pay-beneficiary-id" placeholder="ID de l'utilisateur" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1.5">Montant à verser (FC)</label>
+                                <input type="number" id="pay-amount" placeholder="Ex: 5000" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1.5">Moyen de paiement</label>
+                                <select id="pay-method" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                                    <option value="M-Pesa">M-Pesa</option>
+                                    <option value="Airtel Money">Airtel Money</option>
+                                    <option value="Orange Money">Orange Money</option>
+                                    <option value="Cash">Cash</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1.5">Référence Transaction</label>
+                                <input type="text" id="pay-reference" placeholder="Ex: TXN-MPESA-2349" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="submitAdminPayment()" class="mt-6 w-full py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition shadow-md shadow-primary-950/20">
+                        Enregistrer le versement
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Cart Drawer -->
+    <div id="cart-drawer" class="fixed inset-y-0 right-0 z-50 w-full sm:w-[400px] glass border-l border-slate-800/80 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between hidden">
+        <div class="p-6 overflow-y-auto custom-scrollbar flex-grow flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+                <h3 class="text-base font-extrabold text-slate-100 flex items-center space-x-2">
+                    <i data-lucide="shopping-bag" class="w-5 h-5 text-primary-400"></i>
+                    <span>Votre Panier</span>
+                </h3>
+                <button onclick="toggleCartDrawer()" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Items container -->
+            <div id="cart-items-container" class="space-y-4 flex-grow">
+                <p class="text-xs text-slate-500 text-center py-12">Votre panier est vide.</p>
+            </div>
+        </div>
+
+        <!-- Summary & Checkout -->
+        <div class="p-6 border-t border-slate-800/80 bg-slate-950/80">
+            <div class="space-y-2.5 text-xs text-slate-400">
+                <div class="flex justify-between">
+                    <span>Sous-total</span>
+                    <span id="cart-subtotal" class="font-bold text-slate-200">0 FC</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Frais de livraison standard</span>
+                    <span id="cart-delivery-fee" class="font-bold text-slate-200">0 FC</span>
+                </div>
+                <div class="flex justify-between border-t border-slate-800/80 pt-2.5 text-sm">
+                    <span class="font-bold text-slate-200">Total Général</span>
+                    <span id="cart-total" class="font-extrabold text-accent-gold">0 FC</span>
+                </div>
+            </div>
+
+            <!-- Checkout form -->
+            <div id="checkout-form-wrapper" class="hidden mt-5 pt-4 border-t border-slate-800/60 space-y-4">
+                <div>
+                    <label class="block text-[9px] uppercase font-bold text-slate-400 mb-1.5">Adresse de livraison</label>
+                    <input type="text" id="checkout-address" placeholder="Rue, n°, quartier, commune, ville" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-primary-500 transition">
+                </div>
+                <div>
+                    <label class="block text-[9px] uppercase font-bold text-slate-400 mb-1.5">Mode de paiement</label>
+                    <select id="checkout-payment-method" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                        <option value="M-Pesa">M-Pesa</option>
+                        <option value="Airtel Money">Airtel Money</option>
+                        <option value="Orange Money">Orange Money</option>
+                        <option value="Cash">Cash</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="btn-checkout" onclick="proceedToCheckout()" class="mt-5 w-full py-3 bg-primary-600 hover:bg-primary-500 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-primary-950/30 flex items-center justify-center space-x-1.5">
+                <i data-lucide="credit-card" class="w-4 h-4"></i>
+                <span>Valider la Commande</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Auth Modal (Login/Register) -->
+    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
+        <div class="glass w-full max-w-md rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Toggle buttons -->
+            <div class="flex border-b border-slate-850 pb-3 mb-5">
+                <button onclick="switchAuthTab('login')" id="auth-tab-login" class="flex-1 py-1.5 text-center text-sm font-bold text-primary-400 border-b-2 border-primary-500">Connexion</button>
+                <button onclick="switchAuthTab('register')" id="auth-tab-register" class="flex-1 py-1.5 text-center text-sm font-bold text-slate-400 hover:text-slate-200">Inscription</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="form-login" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Email</label>
+                    <input type="email" id="login-email" required class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-primary-500 transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Mot de passe</label>
+                    <input type="password" id="login-password" required class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-650 focus:outline-none focus:border-primary-500 transition">
+                </div>
+                <button type="submit" class="w-full mt-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-primary-950/20">
+                    Se connecter
+                </button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="form-register" onsubmit="handleRegisterSubmit(event)" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Nom complet</label>
+                    <input type="text" id="reg-name" required placeholder="Ex: Trésor Mufuta" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Email</label>
+                        <input type="email" id="reg-email" required placeholder="Ex: tresor@gmail.com" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Téléphone</label>
+                        <input type="text" id="reg-phone" required placeholder="Ex: +24381234567" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Mot de passe (min. 6 car.)</label>
+                    <input type="password" id="reg-password" required class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Code Parrain (facultatif)</label>
+                    <input type="text" id="reg-referrer" placeholder="Ex: KNB-XX1234" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                </div>
+                <button type="submit" class="w-full mt-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-primary-950/20">
+                    S'inscrire et générer mon code
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts / logic -->
+    <script>
+        // State variables
+        let products = [];
+        let cart = [];
+        let jwtToken = localStorage.getItem('jwt_token') || '';
+        let currentUser = JSON.parse(localStorage.getItem('current_user') || 'null');
+        let currentAuthTab = 'login';
+        let currentCategory = '';
+        let simData = {
+            codeA: '', emailA: 'referrer_a_sim@example.com',
+            codeB: '', emailB: 'referrer_b_sim@example.com',
+            codeC: '', emailC: 'buyer_c_sim@example.com',
+            orderId: '',
+            rizProduct: null
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            loadProducts();
+            if (jwtToken && currentUser) {
+                updateUIForAuthenticatedUser();
+            }
+        });
+
+        // Toast Helper
+        function showToast(title, message, isError = false) {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const titleEl = document.getElementById('toast-title');
+            const msgEl = document.getElementById('toast-message');
+
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+
+            if (isError) {
+                icon.className = "p-2 rounded-lg bg-red-600 text-white";
+                icon.innerHTML = '<i data-lucide="alert-circle" class="w-5 h-5"></i>';
+            } else {
+                icon.className = "p-2 rounded-lg bg-primary-500 text-white";
+                icon.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i>';
+            }
+            lucide.createIcons();
+
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.remove('translate-x-80'), 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-80');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 4000);
+        }
+
+        // Fetch Products
+        async function loadProducts() {
+            try {
+                let url = '/api/products';
+                if (currentCategory) {
+                    url += `?category=${currentCategory}`;
+                }
+                const res = await fetch(url);
+                products = await res.json();
+                renderProducts();
+            } catch (err) {
+                console.error(err);
+                showToast("Erreur", "Impossible de charger le catalogue", true);
+            }
+        }
+
+        // Render Products Grid
+        function renderProducts() {
+            const grid = document.getElementById('products-grid');
+            if (products.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-500 text-xs">Aucun produit disponible.</div>`;
+                return;
+            }
+
+            grid.innerHTML = products.map(p => `
+                <div class="glass rounded-3xl p-5 flex flex-col justify-between shadow-lg relative group border border-slate-800/80 hover:border-primary-500/40 transition-all duration-300 hover:shadow-primary-950/20">
+                    <div>
+                        <!-- Badge stock -->
+                        <div class="absolute top-4 right-4 flex space-x-1.5">
+                            <span class="bg-primary-500/10 text-primary-400 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">${p.category}</span>
+                            <span class="bg-slate-800/80 text-slate-400 text-[9px] font-semibold px-2 py-0.5 rounded-full">Stock: ${p.stock}</span>
+                        </div>
+                        
+                        <!-- Simple image container with gradient -->
+                        <div class="h-40 rounded-2xl bg-gradient-to-tr from-slate-800/80 to-slate-900 flex items-center justify-center mb-4 relative overflow-hidden">
+                            <i data-lucide="salad" class="w-12 h-12 text-primary-500/20 group-hover:text-primary-400/30 group-hover:scale-110 transition duration-300"></i>
+                            <div class="absolute inset-0 bg-gradient-to-t from-slate-955/80 to-transparent"></div>
+                        </div>
+                        
+                        <h3 class="text-sm font-bold text-slate-100 group-hover:text-primary-400 transition">${p.name}</h3>
+                        <p class="text-[11px] text-slate-400 mt-1.5 leading-relaxed">${p.description || "Aucune description."}</p>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-5 pt-4 border-t border-slate-850">
+                        <span class="font-extrabold text-accent-gold text-sm">${numberWithSpaces(p.price)} <span class="text-[10px] font-medium text-slate-400">FC</span></span>
+                        <button onclick="addToCart(${p.id})" class="px-3.5 py-1.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition shadow-md shadow-primary-950/20 flex items-center space-x-1">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                            <span>Ajouter</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+
+            // Set simulator riz
+            simData.rizProduct = products.find(p => p.name === 'Riz de Bumba');
+        }
+
+        // Filter Catalog
+        function filterCatalog(cat) {
+            currentCategory = cat;
+            document.getElementById('cat-all').className = cat === '' ? 'px-3 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg transition' : 'px-3 py-1.5 text-slate-400 hover:text-white text-xs font-semibold rounded-lg transition';
+            document.getElementById('cat-poissons').className = cat === 'Poissons' ? 'px-3 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg transition' : 'px-3 py-1.5 text-slate-400 hover:text-white text-xs font-semibold rounded-lg transition';
+            document.getElementById('cat-feculents').className = cat === 'Féculents' ? 'px-3 py-1.5 bg-primary-600 text-white text-xs font-semibold rounded-lg transition' : 'px-3 py-1.5 text-slate-400 hover:text-white text-xs font-semibold rounded-lg transition';
+            loadProducts();
+        }
+
+        // Helper spaces
+        function numberWithSpaces(x) {
+            return parseFloat(x).toLocaleString('fr-FR');
+        }
+
+        // Cart Drawer actions
+        function toggleCartDrawer() {
+            const drawer = document.getElementById('cart-drawer');
+            drawer.classList.toggle('hidden');
+            setTimeout(() => {
+                drawer.classList.toggle('translate-x-full');
+            }, 10);
+            renderCart();
+        }
+
+        // Add to Cart
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            const existing = cart.find(item => item.product.id === productId);
+            if (existing) {
+                if (existing.quantity >= product.stock) {
+                    showToast("Limite de stock", "Vous ne pouvez pas ajouter plus que la quantité disponible", true);
+                    return;
+                }
+                existing.quantity++;
+            } else {
+                cart.push({ product, quantity: 1 });
+            }
+            updateCartBadge();
+            showToast("Panier", `"${product.name}" ajouté au panier`);
+        }
+
+        // Remove/adjust cart
+        function changeCartQuantity(productId, delta) {
+            const item = cart.find(item => item.product.id === productId);
+            if (!item) return;
+
+            item.quantity += delta;
+            if (item.quantity <= 0) {
+                cart = cart.filter(i => i.product.id !== productId);
+            }
+            updateCartBadge();
+            renderCart();
+        }
+
+        // Update badge
+        function updateCartBadge() {
+            const badge = document.getElementById('cart-badge');
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            if (totalItems > 0) {
+                badge.textContent = totalItems;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // Render Cart
+        function renderCart() {
+            const container = document.getElementById('cart-items-container');
+            const checkoutForm = document.getElementById('checkout-form-wrapper');
+
+            if (cart.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-12">Votre panier est vide.</p>`;
+                checkoutForm.classList.add('hidden');
+                updateCartTotals(0);
+                return;
+            }
+
+            checkoutForm.classList.remove('hidden');
+
+            container.innerHTML = cart.map(item => `
+                <div class="flex items-center justify-between bg-slate-900/60 border border-slate-850 p-3 rounded-2xl">
+                    <div class="flex-1 pr-3">
+                        <h4 class="text-xs font-bold text-slate-200">${item.product.name}</h4>
+                        <p class="text-[10px] text-accent-gold font-bold mt-1">${numberWithSpaces(item.product.price)} FC</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="changeCartQuantity(${item.product.id}, -1)" class="w-6 h-6 flex items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700/50">-</button>
+                        <span class="text-xs font-bold text-slate-100">${item.quantity}</span>
+                        <button onclick="changeCartQuantity(${item.product.id}, 1)" class="w-6 h-6 flex items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700/50">+</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.product.price) * item.quantity), 0);
+            updateCartTotals(subtotal);
+        }
+
+        function updateCartTotals(subtotal) {
+            const deliveryFee = subtotal > 0 ? 5000 : 0;
+            const total = subtotal + deliveryFee;
+
+            document.getElementById('cart-subtotal').textContent = numberWithSpaces(subtotal) + " FC";
+            document.getElementById('cart-delivery-fee').textContent = numberWithSpaces(deliveryFee) + " FC";
+            document.getElementById('cart-total').textContent = numberWithSpaces(total) + " FC";
+        }
+
+        // Proceed to Checkout
+        async function proceedToCheckout() {
+            if (!jwtToken) {
+                showToast("Connexion requise", "Veuillez vous connecter pour valider la commande", true);
+                openAuthModal();
+                return;
+            }
+
+            const address = document.getElementById('checkout-address').value;
+            const paymentMethod = document.getElementById('checkout-payment-method').value;
+
+            if (!address) {
+                showToast("Erreur", "L'adresse de livraison est requise", true);
+                return;
+            }
+
+            const items = cart.map(i => ({
+                productId: i.product.id,
+                quantity: i.quantity
+            }));
+
+            try {
+                const res = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + jwtToken
+                    },
+                    body: json_encode_raw({ deliveryAddress: address, paymentMethod, items })
+                });
+
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showToast("Commande validée", "Votre commande a été enregistrée avec succès");
+                    cart = [];
+                    updateCartBadge();
+                    toggleCartDrawer();
+                    loadProducts();
+                    loadClientDashboard();
+                } else {
+                    showToast("Erreur", data.message || "Impossible de valider la commande", true);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Erreur", "Erreur réseau lors de la commande", true);
+            }
+        }
+
+        // Raw json helper
+        function json_encode_raw(obj) {
+            return JSON.stringify(obj);
+        }
+
+        // Modal Auth Actions
+        function openAuthModal() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
+        function switchAuthTab(tab) {
+            currentAuthTab = tab;
+            const tabLogin = document.getElementById('auth-tab-login');
+            const tabRegister = document.getElementById('auth-tab-register');
+            const formLogin = document.getElementById('form-login');
+            const formRegister = document.getElementById('form-register');
+
+            if (tab === 'login') {
+                tabLogin.className = "flex-1 py-1.5 text-center text-sm font-bold text-primary-400 border-b-2 border-primary-500";
+                tabRegister.className = "flex-1 py-1.5 text-center text-sm font-bold text-slate-400 hover:text-slate-200";
+                formLogin.classList.remove('hidden');
+                formRegister.classList.add('hidden');
+            } else {
+                tabRegister.className = "flex-1 py-1.5 text-center text-sm font-bold text-primary-400 border-b-2 border-primary-500";
+                tabLogin.className = "flex-1 py-1.5 text-center text-sm font-bold text-slate-400 hover:text-slate-200";
+                formRegister.classList.remove('hidden');
+                formLogin.classList.add('hidden');
+            }
+        }
+
+        // Authenticate submitting
+        async function handleLoginSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (res.status === 200) {
+                    const data = await res.json();
+                    jwtToken = data.token;
+                    localStorage.setItem('jwt_token', jwtToken);
+                    
+                    // Decode token claims simple
+                    const payload = JSON.parse(atob(jwtToken.split('.')[1]));
+                    currentUser = {
+                        email: payload.username,
+                        roles: payload.roles || []
+                    };
+                    localStorage.setItem('current_user', JSON.stringify(currentUser));
+                    
+                    showToast("Connexion réussie", "Vous êtes maintenant connecté");
+                    closeAuthModal();
+                    updateUIForAuthenticatedUser();
+                } else {
+                    showToast("Connexion échouée", "Identifiants invalides", true);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Erreur", "Erreur de communication", true);
+            }
+        }
+
+        async function handleRegisterSubmit(e) {
+            e.preventDefault();
+            const fullName = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const phone = document.getElementById('reg-phone').value;
+            const password = document.getElementById('reg-password').value;
+            const referrerCode = document.getElementById('reg-referrer').value;
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullName, email, phone, password, referrerCode })
+                });
+
+                const data = await res.json();
+                if (res.status === 201) {
+                    showToast("Inscription validée", `Code généré: ${data.user.referralCode}`);
+                    switchAuthTab('login');
+                    document.getElementById('login-email').value = email;
+                    document.getElementById('login-password').value = password;
+                } else {
+                    let errMsg = "Erreur d'inscription";
+                    if (data.errors) {
+                        errMsg = Object.values(data.errors).join(', ');
+                    }
+                    showToast("Erreur d'inscription", errMsg, true);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Erreur", "Erreur réseau", true);
+            }
+        }
+
+        function updateUIForAuthenticatedUser() {
+            // Header button
+            const authSection = document.getElementById('header-auth-section');
+            authSection.innerHTML = `
+                <div class="flex items-center space-x-3 bg-slate-850 p-1.5 pl-3 rounded-2xl border border-slate-800">
+                    <span class="text-xs text-slate-300 font-semibold">${currentUser.email}</span>
+                    <button onclick="handleLogout()" class="p-2 bg-slate-800 hover:bg-slate-750 text-red-400 hover:text-red-300 rounded-xl transition">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+            lucide.createIcons();
+
+            // Admin button
+            const adminBtn = document.getElementById('header-admin-toggle-wrapper');
+            if (currentUser.roles.includes('ROLE_ADMIN')) {
+                adminBtn.classList.remove('hidden');
+            } else {
+                adminBtn.classList.add('hidden');
+            }
+
+            // Wallet and order panels
+            document.getElementById('dashboard-wallet-card').classList.remove('hidden');
+            document.getElementById('dashboard-orders-card').classList.remove('hidden');
+            document.getElementById('dashboard-notifications-card').classList.remove('hidden');
+
+            loadClientDashboard();
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('current_user');
+            jwtToken = '';
+            currentUser = null;
+
+            // Reset header button
+            document.getElementById('header-auth-section').innerHTML = `
+                <button onclick="openAuthModal()" class="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-semibold rounded-xl transition shadow-md shadow-primary-950/30">
+                    Connexion / Inscription
+                </button>
+            `;
+            document.getElementById('header-admin-toggle-wrapper').classList.add('hidden');
+
+            // Hide cards
+            document.getElementById('dashboard-wallet-card').classList.add('hidden');
+            document.getElementById('dashboard-orders-card').classList.add('hidden');
+            document.getElementById('dashboard-notifications-card').classList.add('hidden');
+            
+            // Switch back view
+            document.getElementById('admin-portal-view').classList.add('hidden');
+            document.getElementById('client-portal-view').classList.remove('hidden');
+
+            showToast("Déconnexion", "Vous êtes déconnecté");
+        }
+
+        // Load Client Dashboard Data
+        async function loadClientDashboard() {
+            if (!jwtToken) return;
+
+            try {
+                // 1. Wallet & Referrals stats
+                const walletRes = await fetch('/api/wallet', {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                const wallet = await walletRes.json();
+
+                document.getElementById('wallet-client-name').textContent = currentUser.email;
+                document.getElementById('wallet-balance').textContent = numberWithSpaces(wallet.availableBalance);
+                document.getElementById('wallet-total-generated').textContent = numberWithSpaces(wallet.totalGenerated) + " FC";
+                document.getElementById('wallet-total-paid').textContent = numberWithSpaces(wallet.totalPaid) + " FC";
+                document.getElementById('wallet-referral-code').textContent = wallet.referrals.code;
+                document.getElementById('wallet-direct-count').textContent = wallet.referrals.directCount;
+                document.getElementById('wallet-indirect-count').textContent = wallet.referrals.indirectCount;
+
+                // 2. Orders list
+                const ordersRes = await fetch('/api/orders', {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                const orders = await ordersRes.json();
+                renderClientOrders(orders);
+
+                // 3. Notifications list
+                const notifRes = await fetch('/api/notifications', {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                const notifications = await notifRes.json();
+                renderClientNotifications(notifications);
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Render customer orders
+        function renderClientOrders(orders) {
+            const list = document.getElementById('customer-orders-list');
+            if (orders.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Aucune commande.</p>`;
+                return;
+            }
+
+            list.innerHTML = orders.map(o => {
+                let statusColor = "bg-slate-800 text-slate-400";
+                let actionBtn = "";
+
+                switch (o.status) {
+                    case 'received': statusColor = "bg-blue-600/10 text-blue-400 border border-blue-500/20"; break;
+                    case 'preparing': statusColor = "bg-amber-600/10 text-amber-400 border border-amber-500/20"; break;
+                    case 'shipping': statusColor = "bg-orange-600/10 text-orange-400 border border-orange-500/20"; break;
+                    case 'delivered': 
+                        statusColor = "bg-teal-600/10 text-teal-400 border border-teal-500/20 animate-pulse";
+                        actionBtn = `<button onclick="confirmOrderDelivery(${o.id})" class="mt-2.5 w-full py-1.5 bg-primary-600 hover:bg-primary-500 text-white text-[11px] font-bold rounded-lg transition shadow">Confirmer la réception</button>`;
+                        break;
+                    case 'confirmed': statusColor = "bg-emerald-600/15 text-emerald-400 border border-emerald-500/25"; break;
+                }
+
+                return `
+                    <div class="bg-slate-900/60 border border-slate-850 p-3.5 rounded-2xl">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-200">Cmd #${o.id}</span>
+                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusColor}">${o.status}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 mt-2">
+                            <span>Total: <b class="text-slate-200">${numberWithSpaces(o.totalAmount)} FC</b></span>
+                            <span>${formatDateIso(o.createdAt)}</span>
+                        </div>
+                        ${actionBtn}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render customer notifications
+        function renderClientNotifications(notifs) {
+            const list = document.getElementById('customer-notifications-list');
+            if (notifs.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Aucune notification.</p>`;
+                return;
+            }
+
+            list.innerHTML = notifs.map(n => `
+                <div class="bg-slate-900/30 border border-slate-850/65 p-3 rounded-xl flex items-start space-x-2.5 ${n.isRead ? 'opacity-60' : 'border-l-2 border-l-primary-500 bg-primary-500/5'}">
+                    <div class="mt-0.5 text-accent-gold">
+                        <i data-lucide="${n.type === 'commission' ? 'coins' : 'bell'}" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-[11px] font-bold text-slate-200">${n.title}</h4>
+                            <span class="text-[9px] text-slate-500">${formatDateIso(n.createdAt)}</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">${n.message}</p>
+                        ${!n.isRead ? `<button onclick="markNotificationRead(${n.id})" class="text-[9px] font-semibold text-primary-400 hover:text-white mt-1.5 transition">Marquer comme lu</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        async function markNotificationRead(id) {
+            try {
+                await fetch(`/api/notifications/${id}/read`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                loadClientDashboard();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function confirmOrderDelivery(id) {
+            try {
+                const res = await fetch(`/api/orders/${id}/confirm`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showToast("Livraison confirmée", "Merci ! Votre confirmation a déclenché le calcul des commissions");
+                    loadClientDashboard();
+                } else {
+                    showToast("Erreur", data.message || "Erreur de validation", true);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function copyReferralCode() {
+            const code = document.getElementById('wallet-referral-code').textContent;
+            navigator.clipboard.writeText(code);
+            showToast("Presse-papiers", "Code parrain copié !");
+        }
+
+        function formatDateIso(isoStr) {
+            const d = new Date(isoStr);
+            return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Toggle Admin/Client Portals
+        let adminPortalOpen = false;
+        function toggleAdminPortal() {
+            const clientPortal = document.getElementById('client-portal-view');
+            const adminPortal = document.getElementById('admin-portal-view');
+            const btn = document.getElementById('admin-portal-btn');
+
+            adminPortalOpen = !adminPortalOpen;
+            if (adminPortalOpen) {
+                clientPortal.classList.add('hidden');
+                adminPortal.classList.remove('hidden');
+                btn.innerHTML = `<i data-lucide="store" class="w-4 h-4"></i><span>Boutique</span>`;
+                loadAdminPortalData();
+            } else {
+                adminPortal.classList.add('hidden');
+                clientPortal.classList.remove('hidden');
+                btn.innerHTML = `<i data-lucide="shield" class="w-4 h-4"></i><span>Espace Admin</span>`;
+                loadClientDashboard();
+            }
+            lucide.createIcons();
+        }
+
+        // Load Admin Portal Data
+        async function loadAdminPortalData() {
+            if (!jwtToken) return;
+
+            try {
+                // 1. Dashboard stats
+                const statRes = await fetch('/api/admin/dashboard', {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                const stats = await statRes.json();
+
+                document.getElementById('admin-stat-sales').textContent = numberWithSpaces(stats.totalSales) + " FC";
+                document.getElementById('admin-stat-comm-gen').textContent = numberWithSpaces(stats.totalCommissionsGenerated) + " FC";
+                document.getElementById('admin-stat-comm-paid').textContent = numberWithSpaces(stats.totalCommissionsPaid) + " FC";
+                document.getElementById('admin-stat-orders').textContent = stats.totalOrders;
+                document.getElementById('admin-stat-clients').textContent = stats.totalClients;
+
+                // 2. Fetch clients to look for orders
+                const clientsRes = await fetch('/api/admin/clients', {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                const clients = await clientsRes.json();
+
+                // 3. Fetch all orders
+                const ordersRes = await fetch('/api/admin/orders', {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                const orders = await ordersRes.json();
+                renderAdminOrders(orders);
+
+            } catch (err) {
+                console.error(err);
+                showToast("Erreur Admin", "Impossible de charger les données admin", true);
+            }
+        }
+
+        // Render admin orders
+        function renderAdminOrders(orders) {
+            const table = document.getElementById('admin-orders-table');
+            if (orders.length === 0) {
+                table.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-500">Aucune commande en cours.</td></tr>`;
+                return;
+            }
+
+            table.innerHTML = orders.map(o => {
+                let statusBadge = "";
+                let actions = "";
+
+                switch (o.status) {
+                    case 'received':
+                        statusBadge = `<span class="bg-blue-600/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full">reçu</span>`;
+                        actions = `<button onclick="updateOrderStatus(${o.id}, 'preparing')" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-semibold transition mr-1">Préparer</button>`;
+                        break;
+                    case 'preparing':
+                        statusBadge = `<span class="bg-amber-600/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full">préparation</span>`;
+                        actions = `<button onclick="updateOrderStatus(${o.id}, 'shipping')" class="px-2.5 py-1 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold transition mr-1">Expédier</button>`;
+                        break;
+                    case 'shipping':
+                        statusBadge = `<span class="bg-orange-600/10 text-orange-400 border border-orange-500/20 px-2 py-0.5 rounded-full">en cours</span>`;
+                        actions = `<button onclick="updateOrderStatus(${o.id}, 'delivered')" class="px-2.5 py-1 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-semibold transition mr-1">Livrer</button>`;
+                        break;
+                    case 'delivered':
+                        statusBadge = `<span class="bg-teal-600/10 text-teal-400 border border-teal-500/20 px-2 py-0.5 rounded-full">livré</span>`;
+                        actions = `<span class="text-xs text-slate-500 italic">En attente client</span>`;
+                        break;
+                    case 'confirmed':
+                        statusBadge = `<span class="bg-emerald-600/15 text-emerald-400 border border-emerald-500/25 px-2 py-0.5 rounded-full">confirmé</span>`;
+                        actions = `<span class="text-xs text-emerald-500 font-semibold">Validé</span>`;
+                        break;
+                }
+
+                return `
+                    <tr class="hover:bg-slate-850/50 transition">
+                        <td class="py-3 font-bold text-slate-100">#${o.id}</td>
+                        <td class="py-3">${o.customerName} <span class="text-[10px] text-slate-500">(ID: ${o.customerId})</span></td>
+                        <td class="py-3 text-slate-200 font-semibold">${numberWithSpaces(o.totalAmount)} FC</td>
+                        <td class="py-3">${o.paymentMethod}</td>
+                        <td class="py-3">${statusBadge}</td>
+                        <td class="py-3 text-right">${actions}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Admin Order Status Update
+        async function updateOrderStatus(orderId, status) {
+            try {
+                const res = await fetch(`/api/admin/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + jwtToken
+                    },
+                    body: JSON.stringify({ status })
+                });
+
+                if (res.ok) {
+                    showToast("Statut mis à jour", `La commande #${orderId} est passée à "${status}"`);
+                    loadAdminPortalData();
+                } else {
+                    const data = await res.json();
+                    showToast("Erreur", data.message || "Erreur de mise à jour", true);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Erreur", "Erreur réseau", true);
+            }
+        }
+
+        // Record offline payment
+        async function submitAdminPayment() {
+            const beneficiaryId = document.getElementById('pay-beneficiary-id').value;
+            const amount = document.getElementById('pay-amount').value;
+            const paymentMethod = document.getElementById('pay-method').value;
+            const transactionReference = document.getElementById('pay-reference').value;
+
+            if (!beneficiaryId || !amount) {
+                showToast("Erreur", "Bénéficiaire et montant requis", true);
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/admin/payments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + jwtToken
+                    },
+                    body: JSON.stringify({ beneficiaryId: parseInt(beneficiaryId), amount, paymentMethod, transactionReference })
+                });
+
+                const data = await res.json();
+                if (res.status === 201) {
+                    showToast("Paiement enregistré", `Le versement de ${numberWithSpaces(amount)} FC a été enregistré`);
+                    // Clear inputs
+                    document.getElementById('pay-beneficiary-id').value = '';
+                    document.getElementById('pay-amount').value = '';
+                    document.getElementById('pay-reference').value = '';
+                    loadAdminPortalData();
+                } else {
+                    showToast("Erreur", data.message || "Erreur d'enregistrement", true);
+                }
+            } catch (err) {
+                console.error(err);
+                showToast("Erreur", "Erreur de communication", true);
+            }
+        }
+
+        // Stepper Simulator Logic
+        function writeToConsole(msg, isSuccess = false) {
+            const consoleEl = document.getElementById('simulator-console');
+            const color = isSuccess ? 'text-emerald-400' : 'text-slate-300';
+            consoleEl.innerHTML += `\n<span class="${color}">[${new Date().toLocaleTimeString('fr-FR')}] ${msg}</span>`;
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function resetSimulator() {
+            simData = {
+                codeA: '', emailA: 'referrer_a_sim@example.com',
+                codeB: '', emailB: 'referrer_b_sim@example.com',
+                codeC: '', emailC: 'buyer_c_sim@example.com',
+                orderId: '',
+                rizProduct: products.find(p => p.name === 'Riz de Bumba')
+            };
+
+            // Reset UI step classes
+            for (let i = 1; i <= 5; i++) {
+                const el = document.getElementById(`sim-step-${i}`);
+                el.classList.add('opacity-50');
+                if (i > 1) {
+                    document.getElementById(`btn-step-${i}`).disabled = true;
+                    document.getElementById(`btn-step-${i}`).className = "mt-4 w-full py-2 bg-slate-800 text-slate-500 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5";
+                }
+            }
+            document.getElementById('sim-step-1').classList.remove('opacity-50');
+
+            const consoleEl = document.getElementById('simulator-console');
+            consoleEl.innerHTML = `[Info] Le simulateur a été réinitialisé. Cliquez sur "Créer A, B et C" pour recommencer.`;
+        }
+
+        // Run Step 1: Create A, B, C network
+        async function runStep1() {
+            writeToConsole("Initialisation de l'étape 1 : Inscriptions en cascade...");
+            const suffix = Math.floor(Math.random() * 10000);
+            simData.emailA = `ref_a_${suffix}@kitunga.com`;
+            simData.emailB = `ref_b_${suffix}@kitunga.com`;
+            simData.emailC = `buyer_c_${suffix}@kitunga.com`;
+
+            try {
+                // 1. Register A
+                writeToConsole("Création du Parrain A...");
+                let res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullName: 'Parrain A', email: simData.emailA, phone: `+24381${suffix}01`, password: 'password123' })
+                });
+                let data = await res.json();
+                if (res.status !== 201) throw new Error("Échec création A: " + (data.message || JSON.stringify(data.errors)));
+                simData.codeA = data.user.referralCode;
+                writeToConsole(`Parrain A créé. Code: ${simData.codeA}`, true);
+
+                // 2. Register B parrainé par A
+                writeToConsole("Création du Parrain B (parrainé par A)...");
+                res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullName: 'Parrain B', email: simData.emailB, phone: `+24381${suffix}02`, password: 'password123', referrerCode: simData.codeA })
+                });
+                data = await res.json();
+                if (res.status !== 201) throw new Error("Échec création B: " + (data.message || JSON.stringify(data.errors)));
+                simData.codeB = data.user.referralCode;
+                writeToConsole(`Parrain B créé. Code: ${simData.codeB}`, true);
+
+                // 3. Register C parrainé par B
+                writeToConsole("Création du Client C (parrainé par B)...");
+                res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fullName: 'Client C', email: simData.emailC, phone: `+24381${suffix}03`, password: 'password123', referrerCode: simData.codeB })
+                });
+                data = await res.json();
+                if (res.status !== 201) throw new Error("Échec création C: " + (data.message || JSON.stringify(data.errors)));
+                writeToConsole(`Client C créé avec succès parrainé par B !`, true);
+
+                // Enable Step 2
+                document.getElementById('sim-step-1').classList.add('opacity-50');
+                document.getElementById('sim-step-2').classList.remove('opacity-50');
+                document.getElementById('btn-step-2').disabled = false;
+                document.getElementById('btn-step-2').className = "mt-4 w-full py-2 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5 shadow";
+
+                writeToConsole("Étape 1 terminée avec succès ! Passez à l'Étape 2.", true);
+            } catch (err) {
+                writeToConsole("[Erreur] " + err.message);
+                showToast("Erreur", err.message, true);
+            }
+        }
+
+        // Run Step 2: C Orders 100k
+        async function runStep2() {
+            writeToConsole("Initialisation de l'étape 2 : Connexion de C et commande...");
+            try {
+                // 1. Login C
+                writeToConsole("Authentification du Client C...");
+                let res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: simData.emailC, password: 'password123' })
+                });
+                if (!res.ok) throw new Error("Échec connexion C");
+                const loginData = await res.json();
+                const tokenC = loginData.token;
+                writeToConsole("Client C connecté avec succès.", true);
+
+                // Find Riz Product
+                if (!simData.rizProduct) {
+                    const productsRes = await fetch('/api/products');
+                    const productsList = await productsRes.json();
+                    simData.rizProduct = productsList.find(p => p.name === 'Riz de Bumba');
+                }
+
+                if (!simData.rizProduct) throw new Error("Produit 'Riz de Bumba' introuvable");
+
+                // 2. Place Order
+                writeToConsole("Envoi de la commande de 4 sacs de Riz de Bumba (100 000 FC)...");
+                res = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + tokenC
+                    },
+                    body: JSON.stringify({
+                        deliveryAddress: 'Avenue de la Justice, Gombe, Kinshasa',
+                        paymentMethod: 'M-Pesa',
+                        items: [{ productId: simData.rizProduct.id, quantity: 4 }]
+                    })
+                });
+                const data = await res.json();
+                if (res.status !== 201) throw new Error("Échec commande: " + data.message);
+                simData.orderId = data.order.id;
+                writeToConsole(`Commande #${simData.orderId} enregistrée. Sous-total: ${data.order.subtotal} FC. Statut: reçu`, true);
+
+                // Enable Step 3
+                document.getElementById('sim-step-2').classList.add('opacity-50');
+                document.getElementById('sim-step-3').classList.remove('opacity-50');
+                document.getElementById('btn-step-3').disabled = false;
+                document.getElementById('btn-step-3').className = "mt-4 w-full py-2 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5 shadow";
+
+                writeToConsole("Étape 2 terminée avec succès ! Passez à l'Étape 3.", true);
+            } catch (err) {
+                writeToConsole("[Erreur] " + err.message);
+                showToast("Erreur", err.message, true);
+            }
+        }
+
+        // Run Step 3: Admin delivers
+        async function runStep3() {
+            writeToConsole("Initialisation de l'étape 3 : Livraison de la commande...");
+            try {
+                // Login Admin
+                writeToConsole("Connexion de l'Administrateur...");
+                let res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'admin@kitunga.com', password: 'adminpassword' })
+                });
+                if (!res.ok) throw new Error("Échec connexion Admin");
+                const adminToken = (await res.json()).token;
+
+                // Update Status to 'delivered'
+                writeToConsole(`Mise à jour du statut de la commande #${simData.orderId} à "delivered"...`);
+                res = await fetch(`/api/admin/orders/${simData.orderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + adminToken
+                    },
+                    body: JSON.stringify({ status: 'delivered' })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error("Échec livraison: " + data.message);
+                writeToConsole("Commande marquée comme livrée par l'administrateur.", true);
+
+                // Enable Step 4
+                document.getElementById('sim-step-3').classList.add('opacity-50');
+                document.getElementById('sim-step-4').classList.remove('opacity-50');
+                document.getElementById('btn-step-4').disabled = false;
+                document.getElementById('btn-step-4').className = "mt-4 w-full py-2 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5 shadow";
+
+                writeToConsole("Étape 3 terminée ! Passez à l'Étape 4 pour confirmer la réception en tant que C.", true);
+            } catch (err) {
+                writeToConsole("[Erreur] " + err.message);
+                showToast("Erreur", err.message, true);
+            }
+        }
+
+        // Run Step 4: C Confirms
+        async function runStep4() {
+            writeToConsole("Initialisation de l'étape 4 : Confirmation du Client C...");
+            try {
+                // Login C again
+                writeToConsole("Authentification du Client C...");
+                let res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: simData.emailC, password: 'password123' })
+                });
+                if (!res.ok) throw new Error("Échec connexion C");
+                const tokenC = (await res.json()).token;
+
+                // Confirm reception
+                writeToConsole(`Confirmation de la livraison pour la commande #${simData.orderId} par Client C...`);
+                res = await fetch(`/api/orders/${simData.orderId}/confirm`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + tokenC }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error("Échec confirmation: " + data.message);
+                writeToConsole("Réception confirmée par C ! Commissions générées.", true);
+
+                // Enable Step 5
+                document.getElementById('sim-step-4').classList.add('opacity-50');
+                document.getElementById('sim-step-5').classList.remove('opacity-50');
+                document.getElementById('btn-step-5').disabled = false;
+                document.getElementById('btn-step-5').className = "mt-4 w-full py-2 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5 shadow";
+
+                writeToConsole("Étape 4 terminée ! Passez à l'Étape 5 pour vérifier les gains.", true);
+            } catch (err) {
+                writeToConsole("[Erreur] " + err.message);
+                showToast("Erreur", err.message, true);
+            }
+        }
+
+        // Run Step 5: Check Balances
+        async function runStep5() {
+            writeToConsole("Initialisation de l'étape 5 : Vérification des soldes...");
+            try {
+                // 1. Connect B (L1) and check availableBalance
+                writeToConsole("Vérification du portefeuille de B (Parrain direct)...");
+                let res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: simData.emailB, password: 'password123' })
+                });
+                let tokenB = (await res.json()).token;
+                
+                res = await fetch('/api/wallet', {
+                    headers: { 'Authorization': 'Bearer ' + tokenB }
+                });
+                let walletB = await res.json();
+                writeToConsole(`Portefeuille B - Solde: ${numberWithSpaces(walletB.availableBalance)} FC (Attendu: 5 000 FC pour 5% de 100k FC)`, true);
+
+                // 2. Connect A (L2) and check availableBalance
+                writeToConsole("Vérification du portefeuille de A (Grand-parrain)...");
+                res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: simData.emailA, password: 'password123' })
+                });
+                let tokenA = (await res.json()).token;
+                
+                res = await fetch('/api/wallet', {
+                    headers: { 'Authorization': 'Bearer ' + tokenA }
+                });
+                let walletA = await res.json();
+                writeToConsole(`Portefeuille A - Solde: ${numberWithSpaces(walletA.availableBalance)} FC (Attendu: 2 000 FC pour 2% de 100k FC)`, true);
+
+                writeToConsole("=== SIMULATION TERMINÉE AVEC SUCCÈS ===", true);
+                showToast("Simulation réussie", "Tous les soldes ont été vérifiés avec succès !");
+
+                // Disable Step 5
+                document.getElementById('sim-step-5').classList.add('opacity-50');
+                document.getElementById('btn-step-5').disabled = true;
+                document.getElementById('btn-step-5').className = "mt-4 w-full py-2 bg-slate-800 text-slate-500 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5";
+
+                // Auto reload if user is connected
+                if (jwtToken) {
+                    loadClientDashboard();
+                }
+            } catch (err) {
+                writeToConsole("[Erreur] " + err.message);
+                showToast("Erreur", err.message, true);
+            }
+        }
+    </script>
+</body>
+</html>
