@@ -164,12 +164,12 @@
                         <i data-lucide="chevron-down" class="chevron-icon w-3.5 h-3.5" id="shop-section-chevron"></i>
                     </button>
                     <div id="shop-section" class="sidebar-section-items mt-1.5 space-y-1">
-                        <a href="#" onclick="showSection('client-portal'); filterCatalog(''); return false;" class="sidebar-item active" id="menu-catalog">
+                        <a href="#" onclick="showSection('client-portal', 'menu-catalog'); filterCatalog(''); return false;" class="sidebar-item active" id="menu-catalog">
                             <i data-lucide="layout-grid" class="w-4 h-4"></i>
                             <span>Catalogue</span>
                             <span class="active-dot"></span>
                         </a>
-                        <a href="#" onclick="toggleCartDrawer(); return false;" class="sidebar-item" id="menu-cart">
+                        <a href="#" onclick="showSection('client-portal', 'menu-cart'); toggleCartDrawer(); return false;" class="sidebar-item" id="menu-cart">
                             <i data-lucide="shopping-cart" class="w-4 h-4"></i>
                             <span>Panier</span>
                             <span id="cart-badge" class="bg-accent-amber text-slate-950 font-bold text-[9px] px-1.5 py-0.5 rounded-full ml-auto hidden">0</span>
@@ -212,23 +212,23 @@
                         <i data-lucide="chevron-down" class="chevron-icon w-3.5 h-3.5" id="admin-section-chevron"></i>
                     </button>
                     <div id="admin-section" class="sidebar-section-items mt-1.5 space-y-1">
-                        <a href="#" onclick="showSection('admin-portal'); switchAdminTab('dashboard'); return false;" class="sidebar-item" id="menu-admin-dashboard">
+                        <a href="#" onclick="showSection('admin-portal', 'menu-admin-dashboard'); switchAdminTab('dashboard'); return false;" class="sidebar-item" id="menu-admin-dashboard">
                             <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
                             <span>Tableau de bord</span>
                         </a>
-                        <a href="#" onclick="showSection('admin-portal'); switchAdminTab('products'); return false;" class="sidebar-item" id="menu-admin-products">
+                        <a href="#" onclick="showSection('admin-portal', 'menu-admin-products'); switchAdminTab('products'); return false;" class="sidebar-item" id="menu-admin-products">
                             <i data-lucide="package" class="w-4 h-4"></i>
                             <span>Produits</span>
                         </a>
-                        <a href="#" onclick="showSection('admin-portal'); switchAdminTab('categories'); return false;" class="sidebar-item" id="menu-admin-categories">
+                        <a href="#" onclick="showSection('admin-portal', 'menu-admin-categories'); switchAdminTab('categories'); return false;" class="sidebar-item" id="menu-admin-categories">
                             <i data-lucide="tags" class="w-4 h-4"></i>
                             <span>Catégories</span>
                         </a>
-                        <a href="#" onclick="showSection('admin-portal'); switchAdminTab('users'); return false;" class="sidebar-item" id="menu-admin-users">
+                        <a href="#" onclick="showSection('admin-portal', 'menu-admin-users'); switchAdminTab('users'); return false;" class="sidebar-item" id="menu-admin-users">
                             <i data-lucide="users" class="w-4 h-4"></i>
                             <span>Utilisateurs</span>
                         </a>
-                        <a href="#" onclick="showSection('admin-portal'); switchAdminTab('stock'); return false;" class="sidebar-item" id="menu-admin-stock">
+                        <a href="#" onclick="showSection('admin-portal', 'menu-admin-stock'); switchAdminTab('stock'); return false;" class="sidebar-item" id="menu-admin-stock">
                             <i data-lucide="clipboard-list" class="w-4 h-4"></i>
                             <span>Mouvements Stock</span>
                         </a>
@@ -407,29 +407,7 @@
                 </button>
             </div>
 
-            <!-- Admin Navigation Tabs -->
-            <div class="flex flex-wrap gap-2 bg-slate-955/40 p-1.5 rounded-2xl border border-slate-800/80 max-w-2xl">
-                <button onclick="switchAdminTab('dashboard')" id="admin-tab-dashboard" class="px-4 py-2 bg-primary-600 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-                    <span>Commandes & Stats</span>
-                </button>
-                <button onclick="switchAdminTab('products')" id="admin-tab-products" class="px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2">
-                    <i data-lucide="package" class="w-4 h-4"></i>
-                    <span>Produits</span>
-                </button>
-                <button onclick="switchAdminTab('categories')" id="admin-tab-categories" class="px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2">
-                    <i data-lucide="tags" class="w-4 h-4"></i>
-                    <span>Catégories</span>
-                </button>
-                <button onclick="switchAdminTab('users')" id="admin-tab-users" class="px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2">
-                    <i data-lucide="users" class="w-4 h-4"></i>
-                    <span>Utilisateurs</span>
-                </button>
-                <button onclick="switchAdminTab('stock')" id="admin-tab-stock" class="px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2">
-                    <i data-lucide="clipboard-list" class="w-4 h-4"></i>
-                    <span>Historique Stocks</span>
-                </button>
-            </div>
+
 
             <!-- SECTION 1: DASHBOARD & ORDERS -->
             <div id="admin-section-dashboard" class="space-y-8">
@@ -1435,10 +1413,9 @@
             }
         }
 
-        function showSection(sectionType) {
+        function showSection(sectionType, activeMenuId) {
             const clientPortal = document.getElementById('client-portal-view');
             const adminPortal = document.getElementById('admin-portal-view');
-            const isMenuAdmin = sectionType === 'admin-portal';
 
             // Active menu link styling
             document.querySelectorAll('.sidebar-item').forEach(item => {
@@ -1447,29 +1424,30 @@
                 if (dot) dot.remove();
             });
 
-            if (isMenuAdmin) {
+            const currentActiveId = activeMenuId || (sectionType === 'admin-portal' ? 'menu-admin-dashboard' : 'menu-catalog');
+            const activeItem = document.getElementById(currentActiveId);
+            if (activeItem) {
+                activeItem.classList.add('active');
+                if (!activeItem.querySelector('.active-dot')) {
+                    const dot = document.createElement('span');
+                    dot.className = 'active-dot';
+                    activeItem.appendChild(dot);
+                }
+            }
+
+            if (sectionType === 'admin-portal') {
                 clientPortal.classList.add('hidden');
                 adminPortal.classList.remove('hidden');
-                document.getElementById('menu-admin-dashboard').classList.add('active');
-                // close mobile menu
-                const sidebar = document.getElementById('sidebar');
-                const overlay = document.getElementById('sidebar-overlay');
-                sidebar.classList.remove('open');
-                overlay.classList.remove('show');
             } else {
                 adminPortal.classList.add('hidden');
                 clientPortal.classList.remove('hidden');
-                document.getElementById('menu-catalog').classList.add('active');
-                if (!document.getElementById('menu-catalog').querySelector('.active-dot')) {
-                    const dot = document.createElement('span');
-                    dot.className = 'active-dot';
-                    document.getElementById('menu-catalog').appendChild(dot);
-                }
-                const sidebar = document.getElementById('sidebar');
-                const overlay = document.getElementById('sidebar-overlay');
-                sidebar.classList.remove('open');
-                overlay.classList.remove('show');
             }
+
+            // close mobile menu
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar) sidebar.classList.remove('open');
+            if (overlay) overlay.classList.remove('show');
         }
 
         function scrollToElement(id) {
@@ -1763,12 +1741,14 @@
             tabs.forEach(t => {
                 const btn = document.getElementById(`admin-tab-${t}`);
                 const section = document.getElementById(`admin-section-${t}`);
-                if (t === tab) {
-                    btn.className = "px-4 py-2 bg-primary-600 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2";
-                    section.classList.remove('hidden');
-                } else {
-                    btn.className = "px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2";
-                    section.classList.add('hidden');
+                if (section) {
+                    if (t === tab) {
+                        if (btn) btn.className = "px-4 py-2 bg-primary-600 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2";
+                        section.classList.remove('hidden');
+                    } else {
+                        if (btn) btn.className = "px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2";
+                        section.classList.add('hidden');
+                    }
                 }
             });
 
