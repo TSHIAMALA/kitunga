@@ -1088,19 +1088,29 @@
                 return;
             }
 
-            grid.innerHTML = products.map(p => `
+            grid.innerHTML = products.map(p => {
+                const imgUrl = p.imageUrl ? (p.imageUrl.startsWith('http') ? p.imageUrl : '/' + p.imageUrl.replace(/^\//, '')) : '';
+                return `
                 <div class="glass rounded-3xl p-5 flex flex-col justify-between shadow-lg relative group border border-slate-800/80 hover:border-primary-500/40 transition-all duration-300 hover:shadow-primary-950/20">
                     <div>
                         <!-- Badge stock -->
-                        <div class="absolute top-4 right-4 flex space-x-1.5">
+                        <div class="absolute top-4 right-4 flex space-x-1.5 opacity-90 z-10">
                             <span class="bg-primary-500/10 text-primary-400 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">${p.category}</span>
                             <span class="bg-slate-800/80 text-slate-400 text-[9px] font-semibold px-2 py-0.5 rounded-full">Stock: ${p.stock}</span>
                         </div>
                         
                         <!-- Simple image container with gradient -->
                         <div class="h-40 rounded-2xl bg-gradient-to-tr from-slate-800/80 to-slate-900 flex items-center justify-center mb-4 relative overflow-hidden">
-                            <i data-lucide="salad" class="w-12 h-12 text-primary-500/20 group-hover:text-primary-400/30 group-hover:scale-110 transition duration-300"></i>
-                            <div class="absolute inset-0 bg-gradient-to-t from-slate-955/80 to-transparent"></div>
+                            ${imgUrl ? `
+                                <img src="${imgUrl}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                                <div class="hidden w-full h-full flex items-center justify-center relative">
+                                    <i data-lucide="salad" class="w-12 h-12 text-primary-500/20"></i>
+                                    <div class="absolute inset-0 bg-gradient-to-t from-slate-955/80 to-transparent pointer-events-none"></div>
+                                </div>
+                            ` : `
+                                <i data-lucide="salad" class="w-12 h-12 text-primary-500/20 group-hover:text-primary-400/30 group-hover:scale-110 transition duration-300"></i>
+                                <div class="absolute inset-0 bg-gradient-to-t from-slate-955/80 to-transparent pointer-events-none"></div>
+                            `}
                         </div>
                         
                         <h3 class="text-sm font-bold text-slate-100 group-hover:text-primary-400 transition">${p.name}</h3>
@@ -1115,7 +1125,7 @@
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
             lucide.createIcons();
 
             // Set simulator riz
@@ -1821,13 +1831,22 @@
                 return;
             }
 
-            tbody.innerHTML = items.map(p => `
+            tbody.innerHTML = items.map(p => {
+                const imgUrl = p.imageUrl ? (p.imageUrl.startsWith('http') ? p.imageUrl : '/' + p.imageUrl.replace(/^\//, '')) : '';
+                return `
                 <tr class="hover:bg-slate-850/50 transition border-b border-slate-800/40">
                     <td class="py-3 font-bold text-slate-100">#${p.id}</td>
                     <td class="py-3">
                         <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-slate-400">
-                                <i data-lucide="salad" class="w-4 h-4"></i>
+                            <div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-slate-400 overflow-hidden">
+                                ${imgUrl ? `
+                                    <img src="${imgUrl}" alt="${p.name}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');">
+                                    <div class="hidden">
+                                        <i data-lucide="salad" class="w-4 h-4"></i>
+                                    </div>
+                                ` : `
+                                    <i data-lucide="salad" class="w-4 h-4"></i>
+                                `}
                             </div>
                             <div>
                                 <span class="font-semibold block text-slate-200">${p.name}</span>
@@ -1853,7 +1872,7 @@
                         </button>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
             lucide.createIcons();
         }
 

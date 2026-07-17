@@ -413,6 +413,42 @@ class AdminController extends AbstractController
         return new JsonResponse($data, Response::HTTP_OK);
     }
 
+    #[Route('/products/upload-image', name: 'api_admin_products_upload_image', methods: ['POST'])]
+    public function uploadProductImage(Request $request): JsonResponse
+    {
+        $file = $request->files->get('image');
+        if (!$file) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Aucune image n\'a été envoyée.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!in_array($file->getClientMimeType(), $allowedMimeTypes)) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Format d\'image invalide (seuls JPG, PNG, WEBP, GIF sont autorisés).'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($file->getSize() > 5 * 1024 * 1024) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Le fichier est trop volumineux (max 5 Mo).'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/products';
+        if (!is_dir($uploadsDir)) {
+            mkdir($uploadsDir, 0777, true);
+        }
+
+        $newFilename = uniqid('prod_', true) . '.' . $file->guessExtension();
+
+        try {
+            $file->move($uploadsDir, $newFilename);
+        } catch (\Exception $e) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Erreur lors de la sauvegarde du fichier.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return new JsonResponse([
+            'status' => 'success',
+            'imageUrl' => '/uploads/products/' . $newFilename
+        ], Response::HTTP_OK);
+    }
+
     #[Route('/products', name: 'api_admin_products_create', methods: ['POST'])]
     public function createProduct(Request $request): JsonResponse
     {
