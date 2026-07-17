@@ -21,21 +21,26 @@
                     },
                     colors: {
                         primary: {
-                            50: '#f2f8f3',
-                            100: '#e1efe4',
-                            200: '#c5dfcd',
-                            300: '#9bc6aa',
-                            400: '#6ca881',
-                            500: '#488b60',
-                            600: '#35714a',
-                            700: '#2c5b3d',
-                            800: '#254932',
-                            900: '#203d2b',
-                            950: '#112217',
+                            50: '#edfaf4',
+                            100: '#d4f2e3',
+                            200: '#aee5cb',
+                            300: '#7ad3ac',
+                            400: '#3dbb86',
+                            500: '#1da87b',
+                            600: '#0f8962',
+                            700: '#0d6e50',
+                            800: '#0d5741',
+                            900: '#0b4836',
+                            950: '#06281e',
                         },
                         accent: {
-                            gold: '#d4af37',
-                            amber: '#f59e0b',
+                            gold: '#8b8c2a',
+                            amber: '#b5b53e',
+                        },
+                        olive: {
+                            400: '#b5b53e',
+                            500: '#8b8c2a',
+                            600: '#6e7024',
                         }
                     }
                 }
@@ -60,11 +65,56 @@
             border-radius: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(72, 139, 96, 0.6);
+            background: rgba(29, 168, 123, 0.6);
+        }
+        /* === Sidebar === */
+        .sidebar {
+            background: linear-gradient(180deg, #042a22 0%, #074a3b 35%, #0a5c47 70%, #0d6e50 100%);
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .sidebar-section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; padding: 10px 12px; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            color: rgba(255, 255, 255, 0.8); border-radius: 10px;
+            transition: all 0.2s; cursor: pointer; background: transparent; border: none;
+            font-family: 'Outfit', sans-serif;
+        }
+        .sidebar-section-header:hover { background: rgba(255, 255, 255, 0.05); }
+        .sidebar-section-items { padding-left: 8px; }
+        .sidebar-item {
+            display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+            font-size: 13px; color: rgba(255, 255, 255, 0.55); border-radius: 8px;
+            cursor: pointer; transition: all 0.2s; position: relative; text-decoration: none;
+        }
+        .sidebar-item:hover { color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); }
+        .sidebar-item.active { color: #fff; background: rgba(29, 168, 123, 0.2); }
+        .sidebar-item .active-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: #1da87b; margin-left: auto;
+        }
+        .sidebar .logo-glow { filter: drop-shadow(0 0 20px rgba(29, 168, 123, 0.3)); }
+        .sidebar .chevron-icon { transition: transform 0.3s ease; }
+        .sidebar .chevron-icon.rotated { transform: rotate(180deg); }
+        .sidebar-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 29;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .sidebar-overlay.show { opacity: 1; pointer-events: auto; }
+        .mobile-header {
+            display: none; position: sticky; top: 0; z-index: 25;
+            background: rgba(11, 18, 34, 0.95); backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding: 12px 16px;
+        }
+        @media (max-width: 1023px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; z-index: 30; }
+            .sidebar.open { transform: translateX(0); }
+            .mobile-header { display: flex; align-items: center; justify-content: space-between; }
         }
     </style>
 </head>
-<body class="h-full font-sans flex flex-col custom-scrollbar overflow-y-auto">
+<body class="min-h-screen font-sans custom-scrollbar bg-slate-900 text-slate-100">
     <!-- Toast Notification -->
     <div id="toast" class="fixed top-5 right-5 z-50 transform translate-x-80 transition-transform duration-300 ease-in-out glass rounded-xl p-4 flex items-center space-x-3 max-w-sm hidden shadow-2xl">
         <div id="toast-icon" class="p-2 rounded-lg bg-primary-500 text-white">
@@ -76,162 +126,140 @@
         </div>
     </div>
 
-    <!-- Navigation Header -->
-    <header class="glass sticky top-0 z-40 w-full shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="bg-gradient-to-tr from-primary-600 to-accent-amber p-2.5 rounded-2xl shadow-lg shadow-primary-950/50">
-                    <i data-lucide="cooking-pot" class="w-6 h-6 text-white"></i>
+    <!-- Sidebar Overlay for mobile -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
+
+    <!-- Layout container -->
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-64 lg:static lg:flex flex-col hidden lg:flex-shrink-0 z-30 transition-transform duration-300">
+            <!-- Header of sidebar: Logo & Brand -->
+            <div class="p-6 border-b border-white/5 flex flex-col items-center justify-center text-center">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-kitunga-950/60 to-kitunga-900/30 flex items-center justify-center p-2 logo-glow mb-3">
+                    <img src="/images/logo.png" alt="Logo" class="w-full h-full object-contain" onerror="this.style.display='none'; this.parentNode.innerHTML='<i data-lucide=\'cooking-pot\' class=\'w-10 h-10 text-kitunga-400\'></i>'; lucide.createIcons();">
                 </div>
+                <h1 class="text-lg font-extrabold text-white tracking-wider">KITUNGA NA BISO</h1>
+                <p class="text-[9px] text-kitunga-300/60 uppercase tracking-widest font-semibold mt-0.5">Alimentation & Parrainage</p>
+            </div>
+
+            <!-- Login / Profile Button (Top Left of app layout) -->
+            <div class="p-4 border-b border-white/5">
+                <div id="sidebar-auth-section" class="space-y-2">
+                    <button onclick="redirectToLogin()" class="w-full py-2 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-2">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        <span>Connexion</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="flex-grow p-4 space-y-4 overflow-y-auto custom-scrollbar">
+                <!-- Section 1: Espace Boutique -->
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-emerald-400 via-primary-400 to-accent-amber bg-clip-text text-transparent">KITUNGA NA BISO</h1>
-                    <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">Alimentation & Parrainage</p>
+                    <button class="sidebar-section-header" onclick="toggleSidebarSection('shop-section')">
+                        <span class="flex items-center gap-2">
+                            <i data-lucide="store" class="w-4 h-4"></i>
+                            <span>Boutique</span>
+                        </span>
+                        <i data-lucide="chevron-down" class="chevron-icon w-3.5 h-3.5" id="shop-section-chevron"></i>
+                    </button>
+                    <div id="shop-section" class="sidebar-section-items mt-1.5 space-y-1">
+                        <a href="#" onclick="showSection('client-portal'); filterCatalog(''); return false;" class="sidebar-item active" id="menu-catalog">
+                            <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                            <span>Catalogue</span>
+                            <span class="active-dot"></span>
+                        </a>
+                        <a href="#" onclick="toggleCartDrawer(); return false;" class="sidebar-item" id="menu-cart">
+                            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                            <span>Panier</span>
+                            <span id="cart-badge" class="bg-accent-amber text-slate-950 font-bold text-[9px] px-1.5 py-0.5 rounded-full ml-auto hidden">0</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Section 2: Mon Espace -->
+                <div id="menu-section-member" class="hidden">
+                    <button class="sidebar-section-header" onclick="toggleSidebarSection('member-section')">
+                        <span class="flex items-center gap-2">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                            <span>Mon Espace</span>
+                        </span>
+                        <i data-lucide="chevron-down" class="chevron-icon w-3.5 h-3.5" id="member-section-chevron"></i>
+                    </button>
+                    <div id="member-section" class="sidebar-section-items mt-1.5 space-y-1">
+                        <a href="#" onclick="scrollToElement('dashboard-wallet-card'); return false;" class="sidebar-item">
+                            <i data-lucide="wallet" class="w-4 h-4"></i>
+                            <span>Portefeuille</span>
+                        </a>
+                        <a href="#" onclick="scrollToElement('dashboard-orders-card'); return false;" class="sidebar-item">
+                            <i data-lucide="package" class="w-4 h-4"></i>
+                            <span>Mes Commandes</span>
+                        </a>
+                        <a href="#" onclick="scrollToElement('dashboard-notifications-card'); return false;" class="sidebar-item">
+                            <i data-lucide="bell" class="w-4 h-4"></i>
+                            <span>Notifications</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Section 4: Administration -->
+                <div id="menu-section-admin" class="hidden">
+                    <button class="sidebar-section-header" onclick="toggleSidebarSection('admin-section')">
+                        <span class="flex items-center gap-2">
+                            <i data-lucide="shield" class="w-4 h-4"></i>
+                            <span>Administration</span>
+                        </span>
+                        <i data-lucide="chevron-down" class="chevron-icon w-3.5 h-3.5" id="admin-section-chevron"></i>
+                    </button>
+                    <div id="admin-section" class="sidebar-section-items mt-1.5 space-y-1">
+                        <a href="#" onclick="showSection('admin-portal'); switchAdminTab('dashboard'); return false;" class="sidebar-item" id="menu-admin-dashboard">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            <span>Tableau de bord</span>
+                        </a>
+                        <a href="#" onclick="showSection('admin-portal'); switchAdminTab('products'); return false;" class="sidebar-item" id="menu-admin-products">
+                            <i data-lucide="package" class="w-4 h-4"></i>
+                            <span>Produits</span>
+                        </a>
+                        <a href="#" onclick="showSection('admin-portal'); switchAdminTab('categories'); return false;" class="sidebar-item" id="menu-admin-categories">
+                            <i data-lucide="tags" class="w-4 h-4"></i>
+                            <span>Catégories</span>
+                        </a>
+                        <a href="#" onclick="showSection('admin-portal'); switchAdminTab('users'); return false;" class="sidebar-item" id="menu-admin-users">
+                            <i data-lucide="users" class="w-4 h-4"></i>
+                            <span>Utilisateurs</span>
+                        </a>
+                        <a href="#" onclick="showSection('admin-portal'); switchAdminTab('stock'); return false;" class="sidebar-item" id="menu-admin-stock">
+                            <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+                            <span>Mouvements Stock</span>
+                        </a>
+                    </div>
                 </div>
             </div>
 
-            <!-- Header Actions -->
-            <div class="flex items-center space-x-4">
-                <!-- Cart Button -->
-                <button onclick="toggleCartDrawer()" class="relative p-2.5 rounded-xl hover:bg-slate-800 border border-slate-700/50 text-slate-300 hover:text-white transition">
-                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-                    <span id="cart-badge" class="absolute -top-1.5 -right-1.5 bg-accent-amber text-slate-950 font-bold text-[10px] w-5 h-5 flex items-center justify-center rounded-full hidden">0</span>
-                </button>
 
-                <!-- Auth State Wrapper -->
-                <div id="header-auth-section" class="flex items-center space-x-3">
-                    <button onclick="openAuthModal()" class="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-semibold rounded-xl transition shadow-md shadow-primary-950/30">
-                        Connexion / Inscription
-                    </button>
-                </div>
+        </aside>
 
-                <!-- Admin Toggle Button -->
-                <div id="header-admin-toggle-wrapper" class="hidden border-l border-slate-800 pl-4">
-                    <button onclick="toggleAdminPortal()" id="admin-portal-btn" class="px-4 py-2 border border-accent-amber/50 hover:bg-accent-amber/10 text-accent-amber text-sm font-semibold rounded-xl transition flex items-center space-x-2">
-                        <i data-lucide="shield" class="w-4 h-4"></i>
-                        <span>Espace Admin</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Workspace -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col space-y-8">
-        
-        <!-- Workflow Simulator Stepper -->
-        <section class="glass rounded-3xl p-6 shadow-xl relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="absolute bottom-0 left-0 w-64 h-64 bg-accent-amber/5 rounded-full blur-3xl pointer-events-none"></div>
+        <!-- Right Side Content Area -->
+        <div class="flex-1 flex flex-col min-h-screen overflow-x-hidden">
             
-            <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-850 pb-4 mb-6">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-100 flex items-center space-x-2">
-                        <i data-lucide="play" class="w-5 h-5 text-accent-amber"></i>
-                        <span>Simulateur Interactif de Parrainage & Commissions</span>
-                    </h2>
-                    <p class="text-xs text-slate-400 mt-1">Exécutez et observez en direct le calcul multiniveau des commissions (5% Niveau 1, 2% Niveau 2).</p>
-                </div>
-                <div class="mt-3 md:mt-0 flex space-x-2">
-                    <button onclick="resetSimulator()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-semibold rounded-lg transition border border-slate-700/60">
-                        Réinitialiser le Simulateur
-                    </button>
-                </div>
-            </div>
+            <!-- Mobile Header -->
+            <header class="mobile-header">
+                <button onclick="toggleMobileSidebar()" class="p-2 text-slate-300 hover:text-white transition">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <span class="text-sm font-bold text-white tracking-wider flex items-center gap-2">
+                    <i data-lucide="cooking-pot" class="w-5 h-5 text-kitunga-400"></i>
+                    KITUNGA
+                </span>
+                <button onclick="toggleCartDrawer()" class="relative p-2 text-slate-300 hover:text-white transition">
+                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                    <span id="cart-badge-mobile" class="absolute -top-1 -right-1 bg-accent-amber text-slate-950 font-bold text-[8px] w-4 h-4 flex items-center justify-center rounded-full hidden">0</span>
+                </button>
+            </header>
 
-            <!-- Stepper Steps Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <!-- Step 1: Create Network -->
-                <div id="sim-step-1" class="border border-slate-800 bg-slate-900/50 rounded-2xl p-4 flex flex-col justify-between hover:border-primary-500/40 transition">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-primary-400">Étape 1</span>
-                            <span class="text-xs font-semibold text-slate-500">Arborescence</span>
-                        </div>
-                        <h3 class="text-sm font-bold text-slate-200 mt-2">Créer le Réseau</h3>
-                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Création de A, puis B (parrainé par A), et C (parrainé par B).</p>
-                    </div>
-                    <button onclick="runStep1()" class="mt-4 w-full py-2 bg-primary-600/20 hover:bg-primary-600/35 text-primary-300 border border-primary-500/30 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5">
-                        <span>Créer A, B et C</span>
-                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-                    </button>
-                </div>
-
-                <!-- Step 2: C Orders -->
-                <div id="sim-step-2" class="border border-slate-800 bg-slate-900/50 rounded-2xl p-4 flex flex-col justify-between opacity-50 transition">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Étape 2</span>
-                            <span class="text-xs font-semibold text-slate-500">Achat</span>
-                        </div>
-                        <h3 class="text-sm font-bold text-slate-200 mt-2">Commande de C</h3>
-                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Le client C effectue un achat de 4 sacs de Riz de Bumba (100 000 FC).</p>
-                    </div>
-                    <button id="btn-step-2" disabled onclick="runStep2()" class="mt-4 w-full py-2 bg-slate-800 text-slate-500 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5">
-                        <span>Commander 100k FC</span>
-                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-                    </button>
-                </div>
-
-                <!-- Step 3: Admin Delivers -->
-                <div id="sim-step-3" class="border border-slate-800 bg-slate-900/50 rounded-2xl p-4 flex flex-col justify-between opacity-50 transition">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Étape 3</span>
-                            <span class="text-xs font-semibold text-slate-500">Logistique</span>
-                        </div>
-                        <h3 class="text-sm font-bold text-slate-200 mt-2">Marquer Livré</h3>
-                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">L'administrateur passe la commande de C en statut "Livré".</p>
-                    </div>
-                    <button id="btn-step-3" disabled onclick="runStep3()" class="mt-4 w-full py-2 bg-slate-800 text-slate-500 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5">
-                        <span>Livrer la commande</span>
-                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-                    </button>
-                </div>
-
-                <!-- Step 4: C Confirms -->
-                <div id="sim-step-4" class="border border-slate-800 bg-slate-900/50 rounded-2xl p-4 flex flex-col justify-between opacity-50 transition">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Étape 4</span>
-                            <span class="text-xs font-semibold text-slate-500">Validation</span>
-                        </div>
-                        <h3 class="text-sm font-bold text-slate-200 mt-2">C Confirme</h3>
-                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">C valide la réception, ce qui calcule et génère les commissions.</p>
-                    </div>
-                    <button id="btn-step-4" disabled onclick="runStep4()" class="mt-4 w-full py-2 bg-slate-800 text-slate-500 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5">
-                        <span>Confirmer Réception</span>
-                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-                    </button>
-                </div>
-
-                <!-- Step 5: Check Balances -->
-                <div id="sim-step-5" class="border border-slate-800 bg-slate-900/50 rounded-2xl p-4 flex flex-col justify-between opacity-50 transition">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Étape 5</span>
-                            <span class="text-xs font-semibold text-slate-500">Commissions</span>
-                        </div>
-                        <h3 class="text-sm font-bold text-slate-200 mt-2">Vérifier Portefeuilles</h3>
-                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">A gagne 2 000 FC (2%) et B gagne 5 000 FC (5%). Visualisez les soldes.</p>
-                    </div>
-                    <button id="btn-step-5" disabled onclick="runStep5()" class="mt-4 w-full py-2 bg-slate-800 text-slate-500 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-1.5">
-                        <span>Vérifier les Soldes</span>
-                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Terminal log wrapper -->
-            <div class="mt-5 border border-slate-800 rounded-2xl bg-slate-950 p-4">
-                <div class="flex items-center justify-between border-b border-slate-900 pb-2 mb-2">
-                    <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Console de sortie API</span>
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                </div>
-                <div id="simulator-console" class="font-mono text-xs text-slate-300 h-28 overflow-y-auto custom-scrollbar leading-relaxed">
-                    [Info] Le simulateur est prêt. Cliquez sur "Créer A, B et C" pour commencer.
-                </div>
-            </div>
-        </section>
+            <!-- Main Content Container -->
+            <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col space-y-8">
+        
 
         <!-- Client Portal View -->
         <div id="client-portal-view" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -364,6 +392,7 @@
         </div>
 
         <!-- Administration Portal View -->
+        <!-- Administration Portal View -->
         <div id="admin-portal-view" class="space-y-8 hidden">
             <div class="flex items-center justify-between border-b border-slate-800 pb-4">
                 <div>
@@ -378,102 +407,309 @@
                 </button>
             </div>
 
-            <!-- Admin Key Stats Row -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-                <div class="glass rounded-2xl p-5 shadow-lg">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chiffre d'Affaires</span>
-                    <span id="admin-stat-sales" class="text-2xl font-black text-white mt-2 block">0 FC</span>
+            <!-- Admin Navigation Tabs -->
+            <div class="flex flex-wrap gap-2 bg-slate-955/40 p-1.5 rounded-2xl border border-slate-800/80 max-w-2xl">
+                <button onclick="switchAdminTab('dashboard')" id="admin-tab-dashboard" class="px-4 py-2 bg-primary-600 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    <span>Commandes & Stats</span>
+                </button>
+                <button onclick="switchAdminTab('products')" id="admin-tab-products" class="px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2">
+                    <i data-lucide="package" class="w-4 h-4"></i>
+                    <span>Produits</span>
+                </button>
+                <button onclick="switchAdminTab('categories')" id="admin-tab-categories" class="px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2">
+                    <i data-lucide="tags" class="w-4 h-4"></i>
+                    <span>Catégories</span>
+                </button>
+                <button onclick="switchAdminTab('users')" id="admin-tab-users" class="px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                    <span>Utilisateurs</span>
+                </button>
+                <button onclick="switchAdminTab('stock')" id="admin-tab-stock" class="px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+                    <span>Historique Stocks</span>
+                </button>
+            </div>
+
+            <!-- SECTION 1: DASHBOARD & ORDERS -->
+            <div id="admin-section-dashboard" class="space-y-8">
+                <!-- Admin Key Stats Row -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                    <div class="glass rounded-2xl p-5 shadow-lg">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chiffre d'Affaires</span>
+                        <span id="admin-stat-sales" class="text-2xl font-black text-white mt-2 block">0 FC</span>
+                    </div>
+                    <div class="glass rounded-2xl p-5 shadow-lg">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Commissions Générées</span>
+                        <span id="admin-stat-comm-gen" class="text-2xl font-black text-primary-400 mt-2 block">0 FC</span>
+                    </div>
+                    <div class="glass rounded-2xl p-5 shadow-lg">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Commissions Payées</span>
+                        <span id="admin-stat-comm-paid" class="text-2xl font-black text-slate-300 mt-2 block">0 FC</span>
+                    </div>
+                    <div class="glass rounded-2xl p-5 shadow-lg">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Commandes</span>
+                        <span id="admin-stat-orders" class="text-2xl font-black text-accent-amber mt-2 block">0</span>
+                    </div>
+                    <div class="glass rounded-2xl p-5 shadow-lg">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Clients</span>
+                        <span id="admin-stat-clients" class="text-2xl font-black text-slate-100 mt-2 block">0</span>
+                    </div>
                 </div>
-                <div class="glass rounded-2xl p-5 shadow-lg">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Commissions Générées</span>
-                    <span id="admin-stat-comm-gen" class="text-2xl font-black text-primary-400 mt-2 block">0 FC</span>
-                </div>
-                <div class="glass rounded-2xl p-5 shadow-lg">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Commissions Payées</span>
-                    <span id="admin-stat-comm-paid" class="text-2xl font-black text-slate-300 mt-2 block">0 FC</span>
-                </div>
-                <div class="glass rounded-2xl p-5 shadow-lg">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Commandes</span>
-                    <span id="admin-stat-orders" class="text-2xl font-black text-accent-amber mt-2 block">0</span>
-                </div>
-                <div class="glass rounded-2xl p-5 shadow-lg">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Clients</span>
-                    <span id="admin-stat-clients" class="text-2xl font-black text-slate-100 mt-2 block">0</span>
+
+                <!-- Orders Management Table & Actions -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Orders -->
+                    <div class="lg:col-span-2 glass rounded-3xl p-6 shadow-xl">
+                        <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2 border-b border-slate-800 pb-3 mb-4">
+                            <i data-lucide="package-open" class="w-4.5 h-4.5 text-accent-amber"></i>
+                            <span>Suivi des Commandes Clients</span>
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="text-[10px] uppercase font-bold text-slate-500 border-b border-slate-800/80">
+                                        <th class="py-2.5">ID</th>
+                                        <th class="py-2.5">Client</th>
+                                        <th class="py-2.5">Total</th>
+                                        <th class="py-2.5">Méthode</th>
+                                        <th class="py-2.5">Statut</th>
+                                        <th class="py-2.5 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-orders-table" class="divide-y divide-slate-850 text-slate-300">
+                                    <!-- Dynamically loaded -->
+                                    <tr>
+                                        <td colspan="6" class="py-8 text-center text-slate-500">Aucune commande en cours.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Offline Payments Registration -->
+                    <div class="glass rounded-3xl p-6 shadow-xl flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2 border-b border-slate-800 pb-3 mb-5">
+                                <i data-lucide="hand-coins" class="w-4.5 h-4.5 text-primary-400"></i>
+                                <span>Enregistrer Paiement Hors-Ligne</span>
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1 mb-4 leading-relaxed">
+                                Après avoir versé le montant via M-Pesa, Orange, Airtel ou Cash, enregistrez le décaissement ici pour l'inscrire dans le grand livre et mettre à jour le solde du client.
+                            </p>
+                            <!-- Form elements -->
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1.5">Client bénéficiaire (ID)</label>
+                                    <input type="number" id="pay-beneficiary-id" placeholder="ID de l'utilisateur" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1.5">Montant à verser (FC)</label>
+                                    <input type="number" id="pay-amount" placeholder="Ex: 5000" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1.5">Moyen de paiement</label>
+                                    <select id="pay-method" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                                        <option value="M-Pesa">M-Pesa</option>
+                                        <option value="Airtel Money">Airtel Money</option>
+                                        <option value="Orange Money">Orange Money</option>
+                                        <option value="Cash">Cash</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1.5">Référence Transaction</label>
+                                    <input type="text" id="pay-reference" placeholder="Ex: TXN-MPESA-2349" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="submitAdminPayment()" class="mt-6 w-full py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition shadow-md shadow-primary-950/20">
+                            Enregistrer le versement
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Orders Management Table & Actions -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Orders -->
-                <div class="lg:col-span-2 glass rounded-3xl p-6 shadow-xl">
-                    <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2 border-b border-slate-800 pb-3 mb-4">
-                        <i data-lucide="package-open" class="w-4.5 h-4.5 text-accent-amber"></i>
-                        <span>Suivi des Commandes Clients</span>
-                    </h3>
+            <!-- SECTION 2: PRODUCTS MANAGEMENT -->
+            <div id="admin-section-products" class="space-y-6 hidden">
+                <div class="glass rounded-3xl p-6 shadow-xl">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-4 mb-4 gap-4">
+                        <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2">
+                            <i data-lucide="package" class="w-4.5 h-4.5 text-accent-amber"></i>
+                            <span>Gestion des Produits du Catalogue</span>
+                        </h3>
+                        
+                        <!-- Search & Add Actions -->
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <input type="text" id="admin-products-search" oninput="filterAdminProducts()" placeholder="Rechercher un produit..." class="pl-8 pr-3.5 py-1.5 w-48 sm:w-60 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
+                                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5"></i>
+                            </div>
+                            <button onclick="openProductModal()" class="px-3.5 py-1.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition flex items-center space-x-1.5 shadow-md shadow-primary-950/20">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>Ajouter</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs border-collapse">
                             <thead>
                                 <tr class="text-[10px] uppercase font-bold text-slate-500 border-b border-slate-800/80">
                                     <th class="py-2.5">ID</th>
-                                    <th class="py-2.5">Client</th>
-                                    <th class="py-2.5">Total</th>
-                                    <th class="py-2.5">Méthode</th>
-                                    <th class="py-2.5">Statut</th>
+                                    <th class="py-2.5">Produit</th>
+                                    <th class="py-2.5">Prix</th>
+                                    <th class="py-2.5">Catégorie</th>
+                                    <th class="py-2.5">Stock</th>
+                                    <th class="py-2.5">Dispo</th>
                                     <th class="py-2.5 text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="admin-orders-table" class="divide-y divide-slate-850 text-slate-300">
+                            <tbody id="admin-products-table" class="divide-y divide-slate-850 text-slate-300">
                                 <!-- Dynamically loaded -->
                                 <tr>
-                                    <td colspan="6" class="py-8 text-center text-slate-500">Aucune commande en cours.</td>
+                                    <td colspan="7" class="py-8 text-center text-slate-500">Chargement des produits...</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
+            </div>
 
-                <!-- Offline Payments Registration -->
-                <div class="glass rounded-3xl p-6 shadow-xl flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2 border-b border-slate-800 pb-3 mb-5">
-                            <i data-lucide="hand-coins" class="w-4.5 h-4.5 text-primary-400"></i>
-                            <span>Enregistrer Paiement Hors-Ligne</span>
+            <!-- SECTION 3: CATEGORIES MANAGEMENT -->
+            <div id="admin-section-categories" class="space-y-6 hidden">
+                <div class="glass rounded-3xl p-6 shadow-xl">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-4 mb-4 gap-4">
+                        <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2">
+                            <i data-lucide="tags" class="w-4.5 h-4.5 text-accent-amber"></i>
+                            <span>Gestion des Catégories de Produits</span>
                         </h3>
-                        <p class="text-xs text-slate-400 mt-1 mb-4 leading-relaxed">
-                            Après avoir versé le montant via M-Pesa, Orange, Airtel ou Cash, enregistrez le décaissement ici pour l'inscrire dans le grand livre et mettre à jour le solde du client.
-                        </p>
-                        <!-- Form elements -->
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1.5">Client bénéficiaire (ID)</label>
-                                <input type="number" id="pay-beneficiary-id" placeholder="ID de l'utilisateur" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
+                        
+                        <!-- Search & Add Actions -->
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <input type="text" id="admin-categories-search" oninput="filterAdminCategories()" placeholder="Rechercher..." class="pl-8 pr-3.5 py-1.5 w-48 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
+                                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5"></i>
                             </div>
-                            <div>
-                                <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1.5">Montant à verser (FC)</label>
-                                <input type="number" id="pay-amount" placeholder="Ex: 5000" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1.5">Moyen de paiement</label>
-                                <select id="pay-method" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
-                                    <option value="M-Pesa">M-Pesa</option>
-                                    <option value="Airtel Money">Airtel Money</option>
-                                    <option value="Orange Money">Orange Money</option>
-                                    <option value="Cash">Cash</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1.5">Référence Transaction</label>
-                                <input type="text" id="pay-reference" placeholder="Ex: TXN-MPESA-2349" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
-                            </div>
+                            <button onclick="openCategoryModal()" class="px-3.5 py-1.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition flex items-center space-x-1.5 shadow-md shadow-primary-950/20">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>Ajouter</span>
+                            </button>
                         </div>
                     </div>
-                    <button onclick="submitAdminPayment()" class="mt-6 w-full py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition shadow-md shadow-primary-950/20">
-                        Enregistrer le versement
-                    </button>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="text-[10px] uppercase font-bold text-slate-500 border-b border-slate-800/80">
+                                    <th class="py-2.5">ID</th>
+                                    <th class="py-2.5">Nom</th>
+                                    <th class="py-2.5">Slug</th>
+                                    <th class="py-2.5 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-categories-table" class="divide-y divide-slate-850 text-slate-300">
+                                <!-- Dynamically loaded -->
+                                <tr>
+                                    <td colspan="4" class="py-8 text-center text-slate-500">Chargement des catégories...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <!-- SECTION 4: USERS MANAGEMENT -->
+            <div id="admin-section-users" class="space-y-6 hidden">
+                <div class="glass rounded-3xl p-6 shadow-xl">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-4 mb-4 gap-4">
+                        <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2">
+                            <i data-lucide="users" class="w-4.5 h-4.5 text-accent-amber"></i>
+                            <span>Gestion des Utilisateurs & Filleuls</span>
+                        </h3>
+                        
+                        <!-- Search & Add Actions -->
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <input type="text" id="admin-users-search" oninput="filterAdminUsers()" placeholder="Nom, email, tél..." class="pl-8 pr-3.5 py-1.5 w-48 sm:w-60 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
+                                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5"></i>
+                            </div>
+                            <button onclick="openUserModal()" class="px-3.5 py-1.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition flex items-center space-x-1.5 shadow-md shadow-primary-950/20">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>Ajouter</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="text-[10px] uppercase font-bold text-slate-500 border-b border-slate-800/80">
+                                    <th class="py-2.5">ID</th>
+                                    <th class="py-2.5">Nom complet / Parrain</th>
+                                    <th class="py-2.5">Email</th>
+                                    <th class="py-2.5">Téléphone</th>
+                                    <th class="py-2.5">Rôles</th>
+                                    <th class="py-2.5">Statut</th>
+                                    <th class="py-2.5 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-table" class="divide-y divide-slate-850 text-slate-300">
+                                <!-- Dynamically loaded -->
+                                <tr>
+                                    <td colspan="7" class="py-8 text-center text-slate-500">Chargement des utilisateurs...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 5: STOCKS MANAGEMENT -->
+            <div id="admin-section-stock" class="space-y-6 hidden">
+                <div class="glass rounded-3xl p-6 shadow-xl">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-4 mb-4 gap-4">
+                        <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2">
+                            <i data-lucide="clipboard-list" class="w-4.5 h-4.5 text-accent-amber"></i>
+                            <span>Historique des Mouvements de Stock</span>
+                        </h3>
+                        
+                        <!-- Search & Add Actions -->
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <input type="text" id="admin-stock-search" oninput="filterAdminStockMovements()" placeholder="Rechercher un produit..." class="pl-8 pr-3.5 py-1.5 w-48 sm:w-60 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
+                                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5"></i>
+                            </div>
+                            <button onclick="openStockMovementModal()" class="px-3.5 py-1.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition flex items-center space-x-1.5 shadow-md shadow-primary-950/20">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                <span>Ajuster</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="text-[10px] uppercase font-bold text-slate-500 border-b border-slate-800/80">
+                                    <th class="py-2.5">ID</th>
+                                    <th class="py-2.5">Date</th>
+                                    <th class="py-2.5">Produit</th>
+                                    <th class="py-2.5">Quantité</th>
+                                    <th class="py-2.5">Type</th>
+                                    <th class="py-2.5">Description / Auteur</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-stock-table" class="divide-y divide-slate-850 text-slate-300">
+                                <tr>
+                                    <td colspan="6" class="py-8 text-center text-slate-500">Chargement de l'historique de stock...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
     </main>
+        </div> <!-- Closing Right Side Content Area -->
+    </div> <!-- Closing Layout container -->
 
     <!-- Cart Drawer -->
     <div id="cart-drawer" class="fixed inset-y-0 right-0 z-50 w-full sm:w-[400px] glass border-l border-slate-800/80 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between hidden">
@@ -594,6 +830,198 @@
         </div>
     </div>
 
+    <!-- Admin Product Modal -->
+    <div id="admin-product-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-955/80 backdrop-blur-sm hidden">
+        <div class="glass w-full max-w-lg rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="closeProductModal()" class="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 id="product-modal-title" class="text-base font-extrabold text-slate-100 border-b border-slate-850 pb-3 mb-5">Ajouter un produit</h3>
+            <form id="product-form" onsubmit="handleProductSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Nom du produit *</label>
+                    <input type="text" id="prod-name" required class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Description</label>
+                    <textarea id="prod-description" rows="3" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Prix (FC) *</label>
+                        <input type="number" id="prod-price" required step="0.01" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Stock disponible *</label>
+                        <input type="number" id="prod-stock" required class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Catégorie *</label>
+                        <select id="prod-category" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                            <!-- Loaded dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">URL de l'image</label>
+                        <input type="text" id="prod-image" placeholder="Ex: /images/riz.jpg" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2.5 pt-2">
+                    <input type="checkbox" id="prod-available" class="rounded bg-slate-900 border-slate-800 text-primary-600 focus:ring-primary-500 h-4 w-4">
+                    <label for="prod-available" class="text-xs font-semibold text-slate-350">Rendre ce produit disponible à la vente immédiatement</label>
+                </div>
+                <button type="submit" class="w-full mt-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-primary-950/20">
+                    Enregistrer le produit
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Category Modal -->
+    <div id="admin-category-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-955/80 backdrop-blur-sm hidden">
+        <div class="glass w-full max-w-md rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="closeCategoryModal()" class="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 id="category-modal-title" class="text-base font-extrabold text-slate-100 border-b border-slate-850 pb-3 mb-5">Ajouter une catégorie</h3>
+            <form id="category-form" onsubmit="handleCategorySubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Nom de la catégorie *</label>
+                    <input type="text" id="cat-name" required class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Slug (laisser vide pour générer automatiquement)</label>
+                    <input type="text" id="cat-slug" placeholder="Ex: fruits-legumes" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                </div>
+                <button type="submit" class="w-full mt-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-primary-950/20">
+                    Enregistrer la catégorie
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin User Modal -->
+    <div id="admin-user-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-955/80 backdrop-blur-sm hidden">
+        <div class="glass w-full max-w-lg rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="closeUserModal()" class="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 id="user-modal-title" class="text-base font-extrabold text-slate-100 border-b border-slate-850 pb-3 mb-5">Ajouter un utilisateur</h3>
+            <form id="user-form" onsubmit="handleUserSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Nom complet *</label>
+                    <input type="text" id="user-name" required class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Email *</label>
+                        <input type="email" id="user-email" required class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Téléphone *</label>
+                        <input type="text" id="user-phone" required class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Adresse</label>
+                    <input type="text" id="user-address" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Rôle *</label>
+                        <select id="user-role" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                            <option value="ROLE_USER">Client (ROLE_USER)</option>
+                            <option value="ROLE_ADMIN">Administrateur (ROLE_ADMIN)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Statut *</label>
+                        <select id="user-status" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                            <option value="active">Actif</option>
+                            <option value="blocked">Bloqué</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label id="user-pass-label" class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Mot de passe *</label>
+                    <input type="password" id="user-password" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                </div>
+                <button type="submit" class="w-full mt-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-primary-950/20">
+                    Enregistrer l'utilisateur
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Network Modal -->
+    <div id="admin-network-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-955/80 backdrop-blur-sm hidden">
+        <div class="glass w-full max-w-2xl rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+            <button onclick="closeNetworkModal()" class="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 class="text-base font-extrabold text-slate-100 border-b border-slate-850 pb-3 mb-4">
+                Réseau de parrainage : <span id="network-modal-user" class="text-accent-gold"></span>
+            </h3>
+            
+            <div id="network-container" class="flex-grow overflow-y-auto custom-scrollbar pr-1 max-h-[60vh] space-y-4">
+                <!-- Loaded dynamically -->
+            </div>
+            
+            <button onclick="closeNetworkModal()" class="mt-6 w-full py-2.5 bg-slate-850 hover:bg-slate-800 text-slate-350 text-xs font-semibold rounded-xl transition border border-slate-700/60">
+                Fermer
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Stock Movement Modal -->
+    <div id="admin-stock-movement-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-955/80 backdrop-blur-sm hidden">
+        <div class="glass w-full max-w-md rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="closeStockMovementModal()" class="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 class="text-base font-extrabold text-slate-100 border-b border-slate-850 pb-3 mb-4 flex items-center space-x-2">
+                <i data-lucide="clipboard-list" class="w-5 h-5 text-primary-400"></i>
+                <span>Ajuster le Stock Manuellement</span>
+            </h3>
+            
+            <form id="stock-movement-form" onsubmit="handleStockMovementSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Produit *</label>
+                    <select id="sm-product" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Quantité (écart) *</label>
+                        <input type="number" id="sm-quantity" required placeholder="Ex: 50 ou -10" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
+                        <span class="text-[9px] text-slate-500 block mt-1">Utilisez du négatif pour les sorties.</span>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Type d'opération *</label>
+                        <select id="sm-type" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition">
+                            <option value="replenishment">Approvisionnement (+)</option>
+                            <option value="correction">Correction (- / +)</option>
+                            <option value="return">Retour (+)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-semibold text-slate-400 mb-1">Description / Commentaire *</label>
+                    <input type="text" id="sm-description" required placeholder="Ex: Inventaire de juillet ou Arrivage" class="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition">
+                </div>
+                
+                <button type="submit" class="w-full mt-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition shadow-lg shadow-primary-950/20">
+                    Enregistrer le mouvement
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Scripts / logic -->
     <script>
         // State variables
@@ -610,6 +1038,16 @@
             orderId: '',
             rizProduct: null
         };
+
+        // Admin State variables
+        let currentAdminTab = 'dashboard';
+        let adminCategories = [];
+        let adminProducts = [];
+        let adminUsers = [];
+        let adminStockMovements = [];
+        let editingProductId = null;
+        let editingCategoryId = null;
+        let editingUserId = null;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -765,12 +1203,21 @@
         // Update badge
         function updateCartBadge() {
             const badge = document.getElementById('cart-badge');
+            const badgeMobile = document.getElementById('cart-badge-mobile');
             const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            
             if (totalItems > 0) {
-                badge.textContent = totalItems;
-                badge.classList.remove('hidden');
+                if (badge) {
+                    badge.textContent = totalItems;
+                    badge.classList.remove('hidden');
+                }
+                if (badgeMobile) {
+                    badgeMobile.textContent = totalItems;
+                    badgeMobile.classList.remove('hidden');
+                }
             } else {
-                badge.classList.add('hidden');
+                if (badge) badge.classList.add('hidden');
+                if (badgeMobile) badgeMobile.classList.add('hidden');
             }
         }
 
@@ -870,7 +1317,7 @@
 
         // Modal Auth Actions
         function openAuthModal() {
-            document.getElementById('auth-modal').classList.remove('hidden');
+            redirectToLogin();
         }
 
         function closeAuthModal() {
@@ -969,25 +1416,118 @@
             }
         }
 
+        // Sidebar navigation & Layout helpers
+        function toggleSidebarSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            const chevron = document.getElementById(sectionId + '-chevron');
+            if (section && chevron) {
+                section.classList.toggle('hidden');
+                chevron.classList.toggle('rotated');
+            }
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('show');
+            }
+        }
+
+        function showSection(sectionType) {
+            const clientPortal = document.getElementById('client-portal-view');
+            const adminPortal = document.getElementById('admin-portal-view');
+            const isMenuAdmin = sectionType === 'admin-portal';
+
+            // Active menu link styling
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+                const dot = item.querySelector('.active-dot');
+                if (dot) dot.remove();
+            });
+
+            if (isMenuAdmin) {
+                clientPortal.classList.add('hidden');
+                adminPortal.classList.remove('hidden');
+                document.getElementById('menu-admin-dashboard').classList.add('active');
+                // close mobile menu
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                sidebar.classList.remove('open');
+                overlay.classList.remove('show');
+            } else {
+                adminPortal.classList.add('hidden');
+                clientPortal.classList.remove('hidden');
+                document.getElementById('menu-catalog').classList.add('active');
+                if (!document.getElementById('menu-catalog').querySelector('.active-dot')) {
+                    const dot = document.createElement('span');
+                    dot.className = 'active-dot';
+                    document.getElementById('menu-catalog').appendChild(dot);
+                }
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                sidebar.classList.remove('open');
+                overlay.classList.remove('show');
+            }
+        }
+
+        function scrollToElement(id) {
+            showSection('client-portal');
+            const el = document.getElementById(id);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // highlight briefly
+                el.classList.add('ring-2', 'ring-primary-500');
+                setTimeout(() => el.classList.remove('ring-2', 'ring-primary-500'), 2000);
+            }
+            // Close mobile menu
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+        }
+
+        function redirectToLogin() {
+            window.location.href = '/login';
+        }
+
         function updateUIForAuthenticatedUser() {
-            // Header button
-            const authSection = document.getElementById('header-auth-section');
-            authSection.innerHTML = `
-                <div class="flex items-center space-x-3 bg-slate-850 p-1.5 pl-3 rounded-2xl border border-slate-800">
-                    <span class="text-xs text-slate-300 font-semibold">${currentUser.email}</span>
-                    <button onclick="handleLogout()" class="p-2 bg-slate-800 hover:bg-slate-750 text-red-400 hover:text-red-300 rounded-xl transition">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            `;
+            // Sidebar auth section
+            const sidebarAuth = document.getElementById('sidebar-auth-section');
+            if (sidebarAuth) {
+                sidebarAuth.innerHTML = `
+                    <div class="flex flex-col gap-2 bg-white/5 p-3 rounded-2xl border border-white/5">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-primary-600/30 flex items-center justify-center text-xs font-bold text-primary-400">
+                                ${currentUser.email.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div class="overflow-hidden">
+                                <p class="text-xs text-slate-200 font-semibold truncate">${currentUser.email}</p>
+                                <p class="text-[9px] text-slate-500 uppercase tracking-wider">Connecté</p>
+                            </div>
+                        </div>
+                        <button onclick="handleLogout()" class="w-full mt-1.5 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5 border border-red-500/10">
+                            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                            <span>Déconnexion</span>
+                        </button>
+                    </div>
+                `;
+            }
             lucide.createIcons();
 
-            // Admin button
-            const adminBtn = document.getElementById('header-admin-toggle-wrapper');
-            if (currentUser.roles.includes('ROLE_ADMIN')) {
-                adminBtn.classList.remove('hidden');
-            } else {
-                adminBtn.classList.add('hidden');
+            // Toggle member sections
+            const memberSection = document.getElementById('menu-section-member');
+            if (memberSection) memberSection.classList.remove('hidden');
+
+            // Toggle admin sections
+            const adminSection = document.getElementById('menu-section-admin');
+            if (adminSection) {
+                if (currentUser.roles.includes('ROLE_ADMIN')) {
+                    adminSection.classList.remove('hidden');
+                } else {
+                    adminSection.classList.add('hidden');
+                }
             }
 
             // Wallet and order panels
@@ -1004,13 +1544,23 @@
             jwtToken = '';
             currentUser = null;
 
-            // Reset header button
-            document.getElementById('header-auth-section').innerHTML = `
-                <button onclick="openAuthModal()" class="px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-semibold rounded-xl transition shadow-md shadow-primary-950/30">
-                    Connexion / Inscription
-                </button>
-            `;
-            document.getElementById('header-admin-toggle-wrapper').classList.add('hidden');
+            // Reset sidebar auth section
+            const sidebarAuth = document.getElementById('sidebar-auth-section');
+            if (sidebarAuth) {
+                sidebarAuth.innerHTML = `
+                    <button onclick="redirectToLogin()" class="w-full py-2 bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-2">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        <span>Connexion</span>
+                    </button>
+                `;
+            }
+            lucide.createIcons();
+
+            // Hide member & admin sections in sidebar
+            const memberSection = document.getElementById('menu-section-member');
+            if (memberSection) memberSection.classList.add('hidden');
+            const adminSection = document.getElementById('menu-section-admin');
+            if (adminSection) adminSection.classList.add('hidden');
 
             // Hide cards
             document.getElementById('dashboard-wallet-card').classList.add('hidden');
@@ -1180,7 +1730,7 @@
                 clientPortal.classList.add('hidden');
                 adminPortal.classList.remove('hidden');
                 btn.innerHTML = `<i data-lucide="store" class="w-4 h-4"></i><span>Boutique</span>`;
-                loadAdminPortalData();
+                switchAdminTab(currentAdminTab);
             } else {
                 adminPortal.classList.add('hidden');
                 clientPortal.classList.remove('hidden');
@@ -1190,7 +1740,53 @@
             lucide.createIcons();
         }
 
-        // Load Admin Portal Data
+        // Helper to check API response status and handle session expiration (401)
+        async function checkResponse(res) {
+            if (res.status === 401) {
+                showToast("Session expirée", "Votre session a expiré ou est invalide. Veuillez vous reconnecter.", true);
+                handleLogout();
+                openAuthModal();
+                throw new Error("Unauthorized");
+            }
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.message || `Erreur serveur (code ${res.status})`);
+            }
+            return res.json();
+        }
+
+        // Switch admin tabs
+        function switchAdminTab(tab) {
+            currentAdminTab = tab;
+            
+            const tabs = ['dashboard', 'products', 'categories', 'users', 'stock'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`admin-tab-${t}`);
+                const section = document.getElementById(`admin-section-${t}`);
+                if (t === tab) {
+                    btn.className = "px-4 py-2 bg-primary-600 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2";
+                    section.classList.remove('hidden');
+                } else {
+                    btn.className = "px-4 py-2 text-slate-400 hover:text-slate-200 text-xs font-semibold rounded-xl transition flex items-center justify-center space-x-2";
+                    section.classList.add('hidden');
+                }
+            });
+
+            if (tab === 'dashboard') {
+                loadAdminPortalData();
+            } else if (tab === 'products') {
+                loadAdminProducts();
+            } else if (tab === 'categories') {
+                loadAdminCategories();
+            } else if (tab === 'users') {
+                loadAdminUsers();
+            } else if (tab === 'stock') {
+                loadAdminStockMovements();
+            }
+            lucide.createIcons();
+        }
+
+        // Load Admin Portal Dashboard Stats & Orders
         async function loadAdminPortalData() {
             if (!jwtToken) return;
 
@@ -1199,7 +1795,7 @@
                 const statRes = await fetch('/api/admin/dashboard', {
                     headers: { 'Authorization': 'Bearer ' + jwtToken }
                 });
-                const stats = await statRes.json();
+                const stats = await checkResponse(statRes);
 
                 document.getElementById('admin-stat-sales').textContent = numberWithSpaces(stats.totalSales) + " FC";
                 document.getElementById('admin-stat-comm-gen').textContent = numberWithSpaces(stats.totalCommissionsGenerated) + " FC";
@@ -1207,22 +1803,769 @@
                 document.getElementById('admin-stat-orders').textContent = stats.totalOrders;
                 document.getElementById('admin-stat-clients').textContent = stats.totalClients;
 
-                // 2. Fetch clients to look for orders
-                const clientsRes = await fetch('/api/admin/clients', {
-                    headers: { 'Authorization': 'Bearer ' + jwtToken }
-                });
-                const clients = await clientsRes.json();
-
-                // 3. Fetch all orders
+                // 2. Fetch all orders
                 const ordersRes = await fetch('/api/admin/orders', {
                     headers: { 'Authorization': 'Bearer ' + jwtToken }
                 });
-                const orders = await ordersRes.json();
+                const orders = await checkResponse(ordersRes);
                 renderAdminOrders(orders);
 
             } catch (err) {
                 console.error(err);
-                showToast("Erreur Admin", "Impossible de charger les données admin", true);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur Admin", "Impossible de charger les données admin : " + err.message, true);
+                }
+            }
+        }
+
+        // PRODUCTS CRUD LOGIC
+        async function loadAdminProducts() {
+            try {
+                const res = await fetch('/api/admin/products', {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                adminProducts = await checkResponse(res);
+                renderAdminProductsTable();
+            } catch (err) {
+                console.error(err);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur Admin", "Impossible de charger les produits : " + err.message, true);
+                }
+            }
+        }
+
+        function renderAdminProductsTable(items = adminProducts) {
+            const tbody = document.getElementById('admin-products-table');
+            if (items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500">Aucun produit trouvé.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = items.map(p => `
+                <tr class="hover:bg-slate-850/50 transition border-b border-slate-800/40">
+                    <td class="py-3 font-bold text-slate-100">#${p.id}</td>
+                    <td class="py-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center text-slate-400">
+                                <i data-lucide="salad" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <span class="font-semibold block text-slate-200">${p.name}</span>
+                                <span class="text-[10px] text-slate-500 block truncate max-w-xs">${p.description || "Pas de description"}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 text-slate-200 font-semibold">${numberWithSpaces(p.price)} FC</td>
+                    <td class="py-3 text-slate-400">${p.category || "Aucune"}</td>
+                    <td class="py-3 text-slate-300 font-semibold">${p.stock}</td>
+                    <td class="py-3">
+                        ${p.isAvailable 
+                            ? '<span class="bg-emerald-600/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px]">Disponible</span>' 
+                            : '<span class="bg-red-600/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded-full text-[10px]">Indisponible</span>'
+                        }
+                    </td>
+                    <td class="py-3 text-right space-x-2">
+                        <button onclick="openProductModal(${p.id})" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-250 rounded-lg text-[11px] font-semibold transition inline-flex items-center space-x-1">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i><span>Modifier</span>
+                        </button>
+                        <button onclick="deleteProduct(${p.id})" class="px-2.5 py-1 bg-red-955/40 hover:bg-red-900/40 text-red-400 rounded-lg text-[11px] font-semibold transition inline-flex items-center space-x-1">
+                            <i data-lucide="trash" class="w-3.5 h-3.5"></i><span>Supprimer</span>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function filterAdminProducts() {
+            const query = document.getElementById('admin-products-search').value.toLowerCase();
+            const filtered = adminProducts.filter(p => 
+                p.name.toLowerCase().includes(query) || 
+                (p.description && p.description.toLowerCase().includes(query)) ||
+                (p.category && p.category.toLowerCase().includes(query))
+            );
+            renderAdminProductsTable(filtered);
+        }
+
+        async function openProductModal(productId = null) {
+            editingProductId = productId;
+            const modal = document.getElementById('admin-product-modal');
+            const title = document.getElementById('product-modal-title');
+            
+            try {
+                const res = await fetch('/api/categories', {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                const categories = await checkResponse(res);
+                const select = document.getElementById('prod-category');
+                select.innerHTML = '<option value="">Sélectionnez une catégorie</option>' + 
+                    categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            } catch (err) {
+                console.error(err);
+            }
+
+            if (productId) {
+                title.textContent = "Modifier le produit";
+                const p = adminProducts.find(x => x.id === productId);
+                if (p) {
+                    document.getElementById('prod-name').value = p.name;
+                    document.getElementById('prod-description').value = p.description || '';
+                    document.getElementById('prod-price').value = p.price;
+                    document.getElementById('prod-stock').value = p.stock;
+                    document.getElementById('prod-image').value = p.imageUrl || '';
+                    document.getElementById('prod-category').value = p.categoryId || '';
+                    document.getElementById('prod-available').checked = p.isAvailable;
+                }
+            } else {
+                title.textContent = "Ajouter un produit";
+                document.getElementById('product-form').reset();
+                document.getElementById('prod-available').checked = true;
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeProductModal() {
+            document.getElementById('admin-product-modal').classList.add('hidden');
+        }
+
+        async function handleProductSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('prod-name').value;
+            const description = document.getElementById('prod-description').value;
+            const price = parseFloat(document.getElementById('prod-price').value);
+            const stock = parseInt(document.getElementById('prod-stock').value);
+            const imageUrl = document.getElementById('prod-image').value;
+            const category = document.getElementById('prod-category').value;
+            const isAvailable = document.getElementById('prod-available').checked;
+
+            if (!name || isNaN(price) || !category) {
+                showToast("Erreur", "Veuillez remplir tous les champs obligatoires", true);
+                return;
+            }
+
+            const body = {
+                name,
+                description,
+                price,
+                stock,
+                imageUrl,
+                category: parseInt(category),
+                isAvailable
+            };
+
+            const url = editingProductId ? `/api/admin/products/${editingProductId}` : '/api/admin/products';
+            const method = editingProductId ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + jwtToken
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                await checkResponse(res);
+                showToast("Succès", editingProductId ? "Produit modifié avec succès" : "Produit créé avec succès");
+                closeProductModal();
+                loadAdminProducts();
+                loadProducts();
+            } catch (err) {
+                console.error(err);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur", "Impossible d'enregistrer le produit : " + err.message, true);
+                }
+            }
+        }
+
+        async function deleteProduct(productId) {
+            if (!confirm("Êtes-vous sûr de vouloir supprimer ce produit ?")) return;
+
+            try {
+                const res = await fetch(`/api/admin/products/${productId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+
+                await checkResponse(res);
+                showToast("Succès", "Produit supprimé avec succès");
+                loadAdminProducts();
+                loadProducts();
+            } catch (err) {
+                console.error(err);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur", "Erreur de suppression : " + err.message, true);
+                }
+            }
+        }
+
+        // CATEGORIES CRUD LOGIC
+        async function loadAdminCategories() {
+            try {
+                const res = await fetch('/api/categories', {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                adminCategories = await checkResponse(res);
+                renderAdminCategoriesTable();
+            } catch (err) {
+                console.error(err);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur Admin", "Impossible de charger les catégories : " + err.message, true);
+                }
+            }
+        }
+
+        function renderAdminCategoriesTable(items = adminCategories) {
+            const tbody = document.getElementById('admin-categories-table');
+            if (items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-500">Aucune catégorie trouvée.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = items.map(c => `
+                <tr class="hover:bg-slate-850/50 transition border-b border-slate-800/40">
+                    <td class="py-3 font-bold text-slate-100">#${c.id}</td>
+                    <td class="py-3 font-semibold text-slate-200">${c.name}</td>
+                    <td class="py-3 text-slate-400">${c.slug}</td>
+                    <td class="py-3 text-right space-x-2">
+                        <button onclick="openCategoryModal(${c.id})" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-750 text-slate-250 rounded-lg text-[11px] font-semibold transition inline-flex items-center space-x-1">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i><span>Modifier</span>
+                        </button>
+                        <button onclick="deleteCategory(${c.id})" class="px-2.5 py-1 bg-red-955/40 hover:bg-red-900/40 text-red-400 rounded-lg text-[11px] font-semibold transition inline-flex items-center space-x-1">
+                            <i data-lucide="trash" class="w-3.5 h-3.5"></i><span>Supprimer</span>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function filterAdminCategories() {
+            const query = document.getElementById('admin-categories-search').value.toLowerCase();
+            const filtered = adminCategories.filter(c => 
+                c.name.toLowerCase().includes(query) || 
+                c.slug.toLowerCase().includes(query)
+            );
+            renderAdminCategoriesTable(filtered);
+        }
+
+        function openCategoryModal(categoryId = null) {
+            editingCategoryId = categoryId;
+            const modal = document.getElementById('admin-category-modal');
+            const title = document.getElementById('category-modal-title');
+
+            if (categoryId) {
+                title.textContent = "Modifier la catégorie";
+                const c = adminCategories.find(x => x.id === categoryId);
+                if (c) {
+                    document.getElementById('cat-name').value = c.name;
+                    document.getElementById('cat-slug').value = c.slug;
+                }
+            } else {
+                title.textContent = "Ajouter une catégorie";
+                document.getElementById('category-form').reset();
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('admin-category-modal').classList.add('hidden');
+        }
+
+        async function handleCategorySubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('cat-name').value;
+            const slug = document.getElementById('cat-slug').value;
+
+            if (!name) {
+                showToast("Erreur", "Le nom est requis", true);
+                return;
+            }
+
+            const body = { name };
+            if (slug) body.slug = slug;
+
+            const url = editingCategoryId ? `/api/admin/categories/${editingCategoryId}` : '/api/admin/categories';
+            const method = editingCategoryId ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + jwtToken
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                await checkResponse(res);
+                showToast("Succès", editingCategoryId ? "Catégorie modifiée avec succès" : "Catégorie créée avec succès");
+                closeCategoryModal();
+                loadAdminCategories();
+            } catch (err) {
+                console.error(err);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur", "Impossible d'enregistrer la catégorie : " + err.message, true);
+                }
+            }
+        }
+
+        async function deleteCategory(categoryId) {
+            if (!confirm("Êtes-vous sûr de vouloir supprimer cette catégorie ?")) return;
+
+            try {
+                const res = await fetch(`/api/admin/categories/${categoryId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+
+                await checkResponse(res);
+                showToast("Succès", "Catégorie supprimée avec succès");
+                loadAdminCategories();
+            } catch (err) {
+                console.error(err);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur", "Erreur de suppression : " + err.message, true);
+                }
+            }
+        }
+
+        // USERS CRUD LOGIC
+        async function loadAdminUsers() {
+            try {
+                const res = await fetch('/api/admin/clients', {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                adminUsers = await checkResponse(res);
+                renderAdminUsersTable();
+            } catch (err) {
+                console.error(err);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur Admin", "Impossible de charger les utilisateurs : " + err.message, true);
+                }
+            }
+        }
+
+        function renderAdminUsersTable(items = adminUsers) {
+            const tbody = document.getElementById('admin-users-table');
+            if (items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500">Aucun utilisateur trouvé.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = items.map(u => {
+                let statusColor = "bg-emerald-600/10 text-emerald-400 border border-emerald-500/20";
+                if (u.status === 'blocked') {
+                    statusColor = "bg-red-600/10 text-red-400 border border-red-500/20";
+                }
+
+                const roles = u.roles || ['ROLE_USER'];
+                const roleBadges = roles.map(r => {
+                    if (r === 'ROLE_ADMIN') return '<span class="bg-amber-600/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full text-[9px]">Admin</span>';
+                    return '<span class="bg-blue-600/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full text-[9px]">Client</span>';
+                }).join(' ');
+
+                const isBlocked = u.status === 'blocked';
+                const toggleStatusAction = isBlocked ? 'active' : 'blocked';
+                const toggleStatusText = isBlocked ? 'Débloquer' : 'Bloquer';
+                const toggleStatusBtnColor = isBlocked ? 'bg-emerald-955/40 hover:bg-emerald-900/40 text-emerald-400' : 'bg-orange-955/40 hover:bg-orange-900/40 text-orange-400';
+                const toggleStatusIcon = isBlocked ? 'unlock font-bold' : 'lock font-bold';
+
+                return `
+                    <tr class="hover:bg-slate-850/50 transition border-b border-slate-800/40">
+                        <td class="py-3 font-bold text-slate-100">#${u.id}</td>
+                        <td class="py-3">
+                            <span class="font-semibold block text-slate-200">${u.fullName}</span>
+                            <span class="text-[10px] text-slate-500 block">Code: ${u.referralCode || "Aucun"}</span>
+                        </td>
+                        <td class="py-3 text-slate-355">${u.email}</td>
+                        <td class="py-3 text-slate-355">${u.phone}</td>
+                        <td class="py-3">${roleBadges}</td>
+                        <td class="py-3">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] ${statusColor}">${u.status === 'active' ? 'Actif' : 'Bloqué'}</span>
+                        </td>
+                        <td class="py-3 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <button onclick="viewUserNetwork(${u.id})" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-250 rounded-lg text-[11px] font-semibold transition inline-flex items-center gap-1" title="Voir son réseau de parrainage">
+                                    <i data-lucide="network" class="w-3.5 h-3.5"></i><span>Réseau</span>
+                                </button>
+                                <button onclick="openUserModal(${u.id})" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold transition inline-flex items-center gap-1" title="Modifier">
+                                    <i data-lucide="edit-3" class="w-3 h-3"></i><span>Modifier</span>
+                                </button>
+                                <button onclick="toggleUserStatus(${u.id}, '${toggleStatusAction}')" class="px-2 py-1 ${toggleStatusBtnColor} rounded-lg text-[11px] font-semibold transition inline-flex items-center gap-1" title="${toggleStatusText}">
+                                    <i data-lucide="${toggleStatusIcon}" class="w-3 h-3"></i><span>${toggleStatusText}</span>
+                                </button>
+                                <button onclick="deleteUser(${u.id})" class="px-2 py-1 bg-red-955/40 hover:bg-red-900/40 text-red-400 rounded-lg text-[11px] font-semibold transition inline-flex items-center gap-1" title="Supprimer">
+                                    <i data-lucide="trash" class="w-3 h-3"></i><span>Suppr</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function filterAdminUsers() {
+            const query = document.getElementById('admin-users-search').value.toLowerCase();
+            const filtered = adminUsers.filter(u => 
+                u.fullName.toLowerCase().includes(query) || 
+                u.email.toLowerCase().includes(query) || 
+                u.phone.toLowerCase().includes(query) || 
+                (u.referralCode && u.referralCode.toLowerCase().includes(query))
+            );
+            renderAdminUsersTable(filtered);
+        }
+
+        function openUserModal(userId = null) {
+            editingUserId = userId;
+            const modal = document.getElementById('admin-user-modal');
+            const title = document.getElementById('user-modal-title');
+            const passLabel = document.getElementById('user-pass-label');
+
+            if (userId) {
+                title.textContent = "Modifier l'utilisateur";
+                passLabel.textContent = "Nouveau mot de passe (laisser vide pour ne pas modifier)";
+                const u = adminUsers.find(x => x.id === userId);
+                if (u) {
+                    document.getElementById('user-name').value = u.fullName;
+                    document.getElementById('user-email').value = u.email;
+                    document.getElementById('user-phone').value = u.phone;
+                    document.getElementById('user-address').value = u.address || '';
+                    document.getElementById('user-role').value = u.roles && u.roles.includes('ROLE_ADMIN') ? 'ROLE_ADMIN' : 'ROLE_USER';
+                    document.getElementById('user-status').value = u.status || 'active';
+                    document.getElementById('user-password').value = '';
+                }
+            } else {
+                title.textContent = "Ajouter un utilisateur";
+                passLabel.textContent = "Mot de passe *";
+                document.getElementById('user-form').reset();
+                document.getElementById('user-status').value = 'active';
+                document.getElementById('user-role').value = 'ROLE_USER';
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeUserModal() {
+            document.getElementById('admin-user-modal').classList.add('hidden');
+        }
+
+        async function handleUserSubmit(e) {
+            e.preventDefault();
+            const fullName = document.getElementById('user-name').value;
+            const email = document.getElementById('user-email').value;
+            const phone = document.getElementById('user-phone').value;
+            const address = document.getElementById('user-address').value;
+            const role = document.getElementById('user-role').value;
+            const status = document.getElementById('user-status').value;
+            const password = document.getElementById('user-password').value;
+
+            if (!fullName || !email || !phone) {
+                showToast("Erreur", "Veuillez remplir tous les champs obligatoires", true);
+                return;
+            }
+
+            if (!editingUserId && !password) {
+                showToast("Erreur", "Le mot de passe est obligatoire pour la création", true);
+                return;
+            }
+
+            const body = {
+                fullName,
+                email,
+                phone,
+                address,
+                roles: [role],
+                status
+            };
+
+            if (password) body.password = password;
+
+            const url = editingUserId ? `/api/admin/clients/${editingUserId}` : '/api/admin/clients';
+            const method = editingUserId ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + jwtToken
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                await checkResponse(res);
+                showToast("Succès", editingUserId ? "Utilisateur modifié avec succès" : "Utilisateur créé avec succès");
+                closeUserModal();
+                loadAdminUsers();
+            } catch (err) {
+                console.error(err);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur", "Impossible d'enregistrer l'utilisateur : " + err.message, true);
+                }
+            }
+        }
+
+        async function toggleUserStatus(userId, newStatus) {
+            try {
+                const res = await fetch(`/api/admin/clients/${userId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + jwtToken
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                await checkResponse(res);
+                showToast("Succès", "Statut utilisateur mis à jour");
+                loadAdminUsers();
+            } catch (err) {
+                console.error(err);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur", "Erreur de mise à jour : " + err.message, true);
+                }
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action supprimera également son portefeuille de commission.")) return;
+
+            try {
+                const res = await fetch(`/api/admin/clients/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+
+                await checkResponse(res);
+                showToast("Succès", "Utilisateur supprimé");
+                loadAdminUsers();
+            } catch (err) {
+                console.error(err);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur", "Erreur de suppression : " + err.message, true);
+                }
+            }
+        }
+
+        // View Referral Network
+        async function viewUserNetwork(userId) {
+            try {
+                const res = await fetch(`/api/admin/clients/${userId}/network`, {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                
+                const data = await checkResponse(res);
+                renderNetworkModal(data);
+            } catch (err) {
+                console.error(err);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur", "Impossible de charger le réseau : " + err.message, true);
+                }
+            }
+        }
+
+        function renderNetworkModal(data) {
+            const modal = document.getElementById('admin-network-modal');
+            document.getElementById('network-modal-user').textContent = data.client.fullName + " (" + data.client.referralCode + ")";
+            
+            const container = document.getElementById('network-container');
+            
+            if (data.level1Referrals.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center py-8">Aucun filleul inscrit pour le moment.</p>`;
+            } else {
+                container.innerHTML = data.level1Referrals.map(l1 => {
+                    const l2Html = l1.subNetwork && l1.subNetwork.length > 0 ? `
+                        <div class="pl-8 mt-2 space-y-2 border-l border-slate-800">
+                            <span class="text-[10px] font-bold text-slate-550 block uppercase tracking-wider">Filleuls Indirects (Niveau 2)</span>
+                            ${l1.subNetwork.map(l2 => `
+                                <div class="bg-slate-900/40 p-2.5 rounded-xl border border-slate-850 flex justify-between items-center">
+                                    <div>
+                                        <h5 class="text-xs font-semibold text-slate-300">${l2.fullName}</h5>
+                                        <p class="text-[10px] text-slate-500">${l2.email} | ${l2.phone}</p>
+                                    </div>
+                                    <span class="text-[9px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full">${formatDateIso(l2.createdAt)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '';
+
+                    return `
+                        <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-800/80 mb-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
+                                        <i data-lucide="user-check" class="w-3.5 h-3.5 text-primary-400"></i>
+                                        <span>${l1.fullName}</span>
+                                    </h4>
+                                    <p class="text-[10px] text-slate-400 mt-1">${l1.email} | ${l1.phone}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] text-primary-400 bg-primary-950/40 px-2.5 py-0.5 rounded-full font-semibold border border-primary-500/20">Niveau 1</span>
+                                    <p class="text-[9px] text-slate-500 mt-1">${formatDateIso(l1.createdAt)}</p>
+                                </div>
+                            </div>
+                            ${l2Html}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            lucide.createIcons();
+            modal.classList.remove('hidden');
+        }
+
+        function closeNetworkModal() {
+            document.getElementById('admin-network-modal').classList.add('hidden');
+        }
+
+        // STOCKS HISTORY LOGIC
+        async function loadAdminStockMovements() {
+            try {
+                const res = await fetch('/api/admin/stock-movements', {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                adminStockMovements = await checkResponse(res);
+                renderAdminStockMovementsTable();
+            } catch (err) {
+                console.error(err);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur Admin", "Impossible de charger l'historique des stocks : " + err.message, true);
+                }
+            }
+        }
+
+        function renderAdminStockMovementsTable(items = adminStockMovements) {
+            const tbody = document.getElementById('admin-stock-table');
+            if (items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-500">Aucun mouvement de stock trouvé.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = items.map(m => {
+                let typeBadge = "";
+                switch (m.type) {
+                    case 'sale':
+                        typeBadge = '<span class="bg-blue-600/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-semibold">Vente</span>';
+                        break;
+                    case 'replenishment':
+                        typeBadge = '<span class="bg-emerald-600/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-semibold">Approvisionnement</span>';
+                        break;
+                    case 'correction':
+                        typeBadge = '<span class="bg-amber-600/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-semibold">Correction</span>';
+                        break;
+                    case 'return':
+                        typeBadge = '<span class="bg-purple-600/10 text-purple-400 border border-purple-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-semibold">Retour</span>';
+                        break;
+                    default:
+                        typeBadge = `<span class="bg-slate-800 text-slate-400 px-2.5 py-0.5 rounded-full text-[10px] font-semibold">${m.type}</span>`;
+                }
+
+                const qtyColor = m.quantity > 0 ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold';
+                const qtyPrefix = m.quantity > 0 ? '+' : '';
+
+                return `
+                    <tr class="hover:bg-slate-850/50 transition border-b border-slate-800/40">
+                        <td class="py-3 font-bold text-slate-100">#${m.id}</td>
+                        <td class="py-3 text-slate-400">${formatDateIso(m.createdAt)}</td>
+                        <td class="py-3 font-semibold text-slate-200">${m.productName} <span class="text-[10px] text-slate-500">(ID: ${m.productId})</span></td>
+                        <td class="py-3 ${qtyColor}">${qtyPrefix}${m.quantity}</td>
+                        <td class="py-3">${typeBadge}</td>
+                        <td class="py-3 text-slate-300">
+                            <div>${m.description || "Aucune description"}</div>
+                            ${m.createdBy ? `<span class="text-[10px] text-slate-500 block mt-0.5">Par: ${m.createdBy}</span>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function filterAdminStockMovements() {
+            const query = document.getElementById('admin-stock-search').value.toLowerCase();
+            const filtered = adminStockMovements.filter(m => 
+                m.productName.toLowerCase().includes(query) || 
+                (m.description && m.description.toLowerCase().includes(query)) ||
+                (m.createdBy && m.createdBy.toLowerCase().includes(query)) ||
+                m.type.toLowerCase().includes(query)
+            );
+            renderAdminStockMovementsTable(filtered);
+        }
+
+        async function openStockMovementModal() {
+            const modal = document.getElementById('admin-stock-movement-modal');
+            const select = document.getElementById('sm-product');
+            
+            try {
+                // Ensure we have the latest list of products
+                const res = await fetch('/api/admin/products', {
+                    headers: { 'Authorization': 'Bearer ' + jwtToken }
+                });
+                adminProducts = await checkResponse(res);
+                
+                select.innerHTML = '<option value="">Sélectionnez un produit</option>' + 
+                    adminProducts.map(p => `<option value="${p.id}">${p.name} (Stock actuel: ${p.stock})</option>`).join('');
+            } catch (err) {
+                console.error(err);
+                showToast("Erreur Admin", "Impossible de charger les produits pour l'ajustement", true);
+                return;
+            }
+
+            document.getElementById('stock-movement-form').reset();
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeStockMovementModal() {
+            document.getElementById('admin-stock-movement-modal').classList.add('hidden');
+        }
+
+        async function handleStockMovementSubmit(e) {
+            e.preventDefault();
+            const productId = document.getElementById('sm-product').value;
+            const quantity = parseInt(document.getElementById('sm-quantity').value);
+            const type = document.getElementById('sm-type').value;
+            const description = document.getElementById('sm-description').value;
+
+            if (!productId || isNaN(quantity) || quantity === 0 || !type || !description) {
+                showToast("Erreur", "Veuillez remplir tous les champs obligatoires (la quantité ne peut pas être 0)", true);
+                return;
+            }
+
+            const body = {
+                productId: parseInt(productId),
+                quantity,
+                type,
+                description
+            };
+
+            try {
+                const res = await fetch('/api/admin/stock-movements', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + jwtToken
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                await checkResponse(res);
+                showToast("Succès", "Mouvement de stock enregistré avec succès");
+                closeStockMovementModal();
+                loadAdminStockMovements();
+                loadProducts(); // Update public store products too
+            } catch (err) {
+                console.error(err);
+                if (err.message !== "Unauthorized") {
+                    showToast("Erreur", "Impossible d'enregistrer le mouvement de stock : " + err.message, true);
+                }
             }
         }
 

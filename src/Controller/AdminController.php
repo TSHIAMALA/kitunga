@@ -447,6 +447,18 @@ class AdminController extends AbstractController
         $this->entityManager->persist($product);
         $this->entityManager->flush();
 
+        $stockInitial = $data['stock'] ?? 0;
+        if ($stockInitial > 0) {
+            $movement = new \App\Entity\StockMovement();
+            $movement->setProduct($product);
+            $movement->setQuantity($stockInitial);
+            $movement->setType('replenishment');
+            $movement->setDescription('Stock initial à la création');
+            $movement->setCreatedBy($this->getUser());
+            $this->entityManager->persist($movement);
+            $this->entityManager->flush();
+        }
+
         return new JsonResponse([
             'status' => 'success',
             'message' => 'Product created successfully',
@@ -485,11 +497,28 @@ class AdminController extends AbstractController
             }
             $product->setCategory($category);
         }
+        $oldStock = $product->getStock();
+
         if (isset($data['imageUrl'])) $product->setImageUrl($data['imageUrl']);
         if (isset($data['stock'])) $product->setStock($data['stock']);
         if (isset($data['isAvailable'])) $product->setIsAvailable($data['isAvailable']);
 
         $this->entityManager->flush();
+
+        if (isset($data['stock'])) {
+            $newStock = $data['stock'];
+            $diff = $newStock - $oldStock;
+            if ($diff !== 0) {
+                $movement = new \App\Entity\StockMovement();
+                $movement->setProduct($product);
+                $movement->setQuantity($diff);
+                $movement->setType($diff > 0 ? 'replenishment' : 'correction');
+                $movement->setDescription('Ajustement manuel par l\'administrateur');
+                $movement->setCreatedBy($this->getUser());
+                $this->entityManager->persist($movement);
+                $this->entityManager->flush();
+            }
+        }
 
         return new JsonResponse([
             'status' => 'success',
@@ -545,5 +574,80 @@ class AdminController extends AbstractController
             'commissions' => $commSummary,
             'topSponsors' => $topSponsors
         ], Response::HTTP_OK);
+    }
+
+    #[Route('/stock-movements', name: 'api_admin_stock_movements', methods: ['GET'])]
+    public function getStockMovements(): JsonResponse
+    {
+        $movements = $this->entityManager->getRepository(\App\Entity\StockMovement::class)
+            ->findBy([], ['createdAt' => 'DESC']);
+
+        $data = [];
+        foreach ($movements as $m) {
+            $data[] = [
+                'id' => $m->getId(),
+                'productName' => $m->getProduct()->getName(),
+                'productId' => $m->getProduct()->getId(),
+                'quantity' => $m->getQuantity(),
+                'type' => $m->getType(),
+                'description' => $m->getDescription(),
+                'createdAt' => $m->getCreatedAt()->format(\DateTimeInterface::ATOM),
+                'createdBy' => $m->getCreatedBy() ? $m->getCreatedBy()->getFullName() : null,
+            ];
+        }
+
+        return new JsonResponse($data, Response::HTTP_OK);
+    }
+
+    #[Route('/stock-movements', name: 'api_admin_stock_movements_create', methods: ['POST'])]
+    public function createStockMovement(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true) ?? [];
+
+        if (empty($data['productId']) || !isset($data['quantity']) || empty($data['type'])) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Missing fields'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $productId = (int)$data['productId'];
+        $quantity = (int)$data['quantity'];
+        $type = $data['type'];
+        $description = $data['description'] ?? null;
+
+        if ($quantity === 0) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Quantity cannot be zero'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $product = $this->entityManager->getRepository(Product::class)->find($productId);
+        if (!$product) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Product not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $newStock = $product->getStock() + $quantity;
+        if ($newStock < 0) {
+            return new JsonResponse(['status' => 'error', 'message' => 'Resulting stock cannot be negative (Current: ' . $product->getStock() . ')'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $product->setStock($newStock);
+        if ($newStock > 0) {
+            $product->setIsAvailable(true);
+        } else {
+            $product->setIsAvailable(false);
+        }
+
+        $movement = new \App\Entity\StockMovement();
+        $movement->setProduct($product);
+        $movement->setQuantity($quantity);
+        $movement->setType($type);
+        $movement->setDescription($description);
+        $movement->setCreatedBy($this->getUser());
+
+        $this->entityManager->persist($movement);
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'status' => 'success',
+            'message' => 'Stock movement recorded successfully',
+            'newStock' => $newStock
+        ], Response::HTTP_CREATED);
     }
 }

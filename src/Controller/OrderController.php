@@ -100,6 +100,17 @@ class OrderController extends AbstractController
         $this->entityManager->persist($order);
         $this->entityManager->flush();
 
+        // Log stock movements for audit trail
+        foreach ($order->getOrderItems() as $orderItem) {
+            $movement = new \App\Entity\StockMovement();
+            $movement->setProduct($orderItem->getProduct());
+            $movement->setQuantity(-$orderItem->getQuantity());
+            $movement->setType('sale');
+            $movement->setDescription('Achat commande #' . $order->getId());
+            $this->entityManager->persist($movement);
+        }
+        $this->entityManager->flush();
+
         return new JsonResponse([
             'status' => 'success',
             'message' => 'Order created successfully',
